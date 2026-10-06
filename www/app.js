@@ -5,24 +5,28 @@ const KEY = 'dz.v1';
 
 const DEFAULT_SUBJECTS = [
   { name: 'HTML 5 API', short: 'HTML5 API', color: '#e9e1fa', kw: ['html5', 'html 5', 'api'] },
-  { name: 'HTML/CSS', short: 'HTML/CSS', color: '#d8f2e4', kw: ['html', 'css', 'верстк', 'flex', 'grid'] },
-  { name: 'Web-компоненты', short: 'Web-компоненты', color: '#fff1bf', kw: ['web-компонент', 'веб-компонент', 'компонент', 'shadow', 'custom element'] },
+  { name: 'HTML/CSS', short: 'HTML/CSS', color: '#d8f2e4', kw: ['html', 'css', 'верстк', 'голубец', 'flex', 'grid'] },
+  { name: 'Web-компоненты', short: 'Web-компоненты', color: '#fff1bf', kw: ['web-компонент', 'веб-компонент', 'веб', 'чернышев', 'чернышёв', 'компонент', 'shadow', 'custom element'] },
   { name: 'Английский язык А2-В1', short: 'Английский', color: '#fde0e4', kw: ['англ', 'english', 'eng'] },
   { name: 'Архитектура информационной системы предприятия', short: 'Архитектура ИС', color: '#dbeafe', kw: ['архитектур', 'информационн', 'предприят', 'uml', 'bpmn'] },
-  { name: 'Введение в фреймворки JavaScript', short: 'Фреймворки JS', color: '#ffe8d1', kw: ['фреймворк', 'framework', 'react', 'vue', 'angular', 'svelte', 'js', 'javascript'] },
-  { name: 'Основы работы с технической документацией', short: 'Техдокументация', color: '#e4f5c8', kw: ['техдок', 'документац', 'техническ', 'тз'] },
-  { name: 'Тестирование. Проектирование тестов', short: 'Тестирование', color: '#f6dcf3', kw: ['тест', 'qa', 'чек-лист', 'баг'] },
+  { name: 'Введение в фреймворки JavaScript', short: 'Фреймворки JS', color: '#ffe8d1', kw: ['фреймворк', 'лидия', 'framework', 'react', 'vue', 'angular', 'svelte', 'js', 'javascript'] },
+  { name: 'Основы работы с технической документацией', short: 'Техдокументация', color: '#e4f5c8', kw: ['техдок', 'рид', 'документац', 'техническ', 'тз'] },
+  { name: 'Тестирование. Проектирование тестов', short: 'Тестирование', color: '#f6dcf3', kw: ['тест', 'qa', 'бобрик', 'чек-лист', 'баг'] },
   { name: 'Учебная практика Front', short: 'Практика Front', color: '#d9f1f5', kw: ['практик', 'front', 'фронт'] },
   { name: 'Физическая культура', short: 'Физра', color: '#ece7dc', kw: ['физ', 'физра', 'физкульт', 'спорт', 'норматив'] },
 ];
 
 function load() {
+  const fresh = () => DEFAULT_SUBJECTS.map((s, i) => ({ id: 's' + (i + 1), ...s }));
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && Array.isArray(s.subjects) && Array.isArray(s.tasks)) return s;
+    if (s && Array.isArray(s.subjects) && Array.isArray(s.tasks)) {
+      s.subjects = fresh();   // предметы всегда берём из кода
+      return s;
+    }
   } catch (e) { /* пусто или битые данные */ }
   return {
-    subjects: DEFAULT_SUBJECTS.map((s, i) => ({ id: 's' + (i + 1), ...s })),
+    subjects: fresh(),
     tasks: [],
     grades: { 3: 50, 4: 70, 5: 90 },
   };
