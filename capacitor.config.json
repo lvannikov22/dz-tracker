@@ -1,8 +1,0 @@
-{
-  "appId": "ru.dz.tracker",
-  "appName": "ДЗ",
-  "webDir": "www",
-  "plugins": {
-    "CapacitorHttp": { "enabled": true }
-  }
-}
