@@ -114,3 +114,4 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .btn-save { background: var(--lilac-d); color: #fff; }
 .btn-del { background: var(--rose); color: var(--rose-d); }
 .btn-x { background: var(--lilac); color: var(--ink); }
+.sub a { color: var(--lilac-d); text-decoration: underline; }
