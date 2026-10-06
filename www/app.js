@@ -275,7 +275,7 @@ $('#quick').addEventListener('submit', e => {
   save();
   qin.value = ''; $('#qprev').innerHTML = '';
   /* ---------- обновление приложения ---------- */
-const REPO = 'Ivannikov22/dz-tracker'; // замени на свой логин GitHub
+const REPO = 'lvannikov22/dz-tracker'; // замени на свой логин GitHub
 
 async function checkUpdate() {
   const cur = Number(window.BUILD || 0);
