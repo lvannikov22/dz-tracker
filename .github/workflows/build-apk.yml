@@ -1,9 +1,15 @@
 name: Build APK
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Опубликовать как обновление для приложения'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -23,6 +29,9 @@ jobs:
       - name: Установка зависимостей
         run: npm install
 
+      - name: Номер сборки для приложения
+        run: echo "window.BUILD = ${{ github.run_number }};" > www/build.js
+
       - name: Постоянный ключ подписи (если задан секрет)
         env:
           KS: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
@@ -35,6 +44,7 @@ jobs:
       - name: Android-проект
         run: |
           npx cap add android
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"build-${{ github.run_number }}\"/" android/app/build.gradle
           npx cap sync android
 
       - name: Сборка APK
@@ -47,3 +57,11 @@ jobs:
         with:
           name: dz-tracker-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Опубликовать релиз
+        if: ${{ inputs.release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Сборка ${{ github.run_number }}
+          files: android/app/build/outputs/apk/debug/app-debug.apk
