@@ -38,7 +38,8 @@ jobs:
         run: |
           if [ -n "$KS" ]; then
             mkdir -p ~/.android
-            echo "$KS" | base64 -d > ~/.android/debug.keystore
+            echo "$KS" | tr -d ' \r\n' | base64 -d > ~/.android/debug.keystore
+            keytool -list -keystore ~/.android/debug.keystore -storepass android > /dev/null
           fi
 
       - name: Android-проект
