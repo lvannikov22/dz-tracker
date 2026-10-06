@@ -159,7 +159,7 @@ function renderToday() {
   $('#screen').innerHTML = `
     <div class="head"><h1>${dateStr}</h1><div class="sub">Домашка на сегодня</div>
       <div class="stats">${stats}</div></div>
-    ${openCount === 0 ? `<div class="empty"><b>Всё сдано 🎉</b>Добавь задание строкой внизу</div>` : ''}
+    ${openCount === 0 ? `<div class="empty"><b>Всё сдано 🎉</b>Добавь задание строкой внизу</div>` : ''}<div class="sub">Домашка на сегодня · <a data-act="upd">проверить обновление</a> · сборка ${window.BUILD || 0}</div>
     ${section('Просрочено', 'over', g.over)}
     ${section('Сегодня', 'today', g.today)}
     ${section('Ближайшие 3 дня', 'soon', g.soon)}
@@ -270,6 +270,26 @@ $('#quick').addEventListener('submit', e => {
   });
   save();
   qin.value = ''; $('#qprev').innerHTML = '';
+  /* ---------- обновление приложения ---------- */
+const REPO = 'ТВОЙ_ЛОГИН/dz-tracker'; // замени на свой логин GitHub
+
+async function checkUpdate() {
+  const cur = Number(window.BUILD || 0);
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+    if (!r.ok) throw new Error('GitHub ответил ' + r.status);
+    const rel = await r.json();
+    const n = Number(String(rel.tag_name).replace(/\D/g, ''));
+    const asset = (rel.assets || []).find(a => a.name.endsWith('.apk'));
+    if (!asset || !(n > cur)) { alert(`У тебя последняя версия (сборка ${cur}).`); return; }
+    if (confirm(`Есть новая сборка ${n} (у тебя ${cur}). Скачать?`)) location.href = asset.browser_download_url;
+  } catch (e) {
+    alert('Не удалось проверить обновление: ' + e.message);
+  }
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-act="upd"]')) checkUpdate();
+});
   render();
 });
 
