@@ -301,52 +301,6 @@ $('#quick').addEventListener('submit', e => {
   });
   save();
   qin.value = ''; $('#qprev').innerHTML = '';
-  /* ---------- обновление приложения ---------- */
-const REPO = 'lvannikov22/dz-tracker'; // замени на свой логин GitHub
-
-function toast(text, ms = 3500) {
-  let el = $('#toast');
-  if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
-  el.textContent = text;
-  el.classList.add('show');
-  clearTimeout(toast.t);
-  if (ms) toast.t = setTimeout(() => el.classList.remove('show'), ms);
-}
-
-const withTimeout = (p, ms) => Promise.race([
-  p,
-  new Promise((_, rej) => setTimeout(() => rej(new Error(`GitHub не ответил за ${ms / 1000} с`)), ms)),
-]);
-
-async function checkUpdate() {
-  if (checkUpdate.busy) return;
-  checkUpdate.busy = true;
-  const cur = Number(window.BUILD || 0);
-  toast('Проверяю обновление…', 0);
-  try {
-    let rel = null, lastErr = null;
-    for (let i = 0; i < 2 && !rel; i++) {
-      try {
-        const r = await withTimeout(fetch(`https://api.github.com/repos/${REPO}/releases/latest`), 8000);
-        if (!r.ok) throw new Error('GitHub ответил ' + r.status);
-        rel = await r.json();
-      } catch (e) { lastErr = e; }
-    }
-    if (!rel) throw lastErr;
-    const n = Number(String(rel.tag_name).replace(/\D/g, ''));
-    const asset = (rel.assets || []).find(a => a.name.endsWith('.apk'));
-    if (!asset || !(n > cur)) { toast(`У тебя последняя версия (сборка ${cur})`); return; }
-    toast(`Есть сборка ${n}`, 2000);
-    if (confirm(`Есть новая сборка ${n} (у тебя ${cur}). Скачать?`)) location.href = asset.browser_download_url;
-  } catch (e) {
-    toast('Не удалось проверить: ' + e.message, 6000);
-  } finally {
-    checkUpdate.busy = false;
-  }
-}
-document.addEventListener('click', e => {
-  if (e.target.closest('[data-act="upd"]')) checkUpdate();
-});
   render();
 });
 /* ---------- расчёт баллов и оценок ---------- */
@@ -665,5 +619,51 @@ $('#screen').addEventListener('change', e => {
   state.userKw = state.userKw || {};
   state.userKw[id] = e.target.value.split(',').map(x => x.trim()).filter(Boolean);
   save();
+});
+  /* ---------- обновление приложения ---------- */
+const REPO = 'lvannikov22/dz-tracker'; // замени на свой логин GitHub
+
+function toast(text, ms = 3500) {
+  let el = $('#toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toast.t);
+  if (ms) toast.t = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+const withTimeout = (p, ms) => Promise.race([
+  p,
+  new Promise((_, rej) => setTimeout(() => rej(new Error(`GitHub не ответил за ${ms / 1000} с`)), ms)),
+]);
+
+async function checkUpdate() {
+  if (checkUpdate.busy) return;
+  checkUpdate.busy = true;
+  const cur = Number(window.BUILD || 0);
+  toast('Проверяю обновление…', 0);
+  try {
+    let rel = null, lastErr = null;
+    for (let i = 0; i < 2 && !rel; i++) {
+      try {
+        const r = await withTimeout(fetch(`https://api.github.com/repos/${REPO}/releases/latest`), 8000);
+        if (!r.ok) throw new Error('GitHub ответил ' + r.status);
+        rel = await r.json();
+      } catch (e) { lastErr = e; }
+    }
+    if (!rel) throw lastErr;
+    const n = Number(String(rel.tag_name).replace(/\D/g, ''));
+    const asset = (rel.assets || []).find(a => a.name.endsWith('.apk'));
+    if (!asset || !(n > cur)) { toast(`У тебя последняя версия (сборка ${cur})`); return; }
+    toast(`Есть сборка ${n}`, 2000);
+    if (confirm(`Есть новая сборка ${n} (у тебя ${cur}). Скачать?`)) location.href = asset.browser_download_url;
+  } catch (e) {
+    toast('Не удалось проверить: ' + e.message, 6000);
+  } finally {
+    checkUpdate.busy = false;
+  }
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-act="upd"]')) checkUpdate();
 });
 render();
