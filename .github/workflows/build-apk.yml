@@ -32,7 +32,7 @@ jobs:
       - name: Номер сборки для приложения
         run: echo "window.BUILD = ${{ github.run_number }};" > www/build.js
 
-      - name: Постоянный ключ подписи (если задан секрет)
+      - name: Постоянный ключ подписи
         env:
           KS: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
         run: |
@@ -41,7 +41,7 @@ jobs:
             echo "$KS" | tr -d ' \r\n' | base64 -d > ~/.android/debug.keystore
             keytool -list -keystore ~/.android/debug.keystore -storepass android | grep -i fingerprint
           else
-            echo "СЕКРЕТ НЕ ЗАДАН, будет случайный ключ"
+            echo "СЕКРЕТ НЕ ЗАДАН"
           fi
 
       - name: Android-проект
@@ -56,10 +56,26 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: Подпись постоянным ключом и проверка
+        env:
+          KS: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          IN=android/app/build/outputs/apk/debug/app-debug.apk
+          if [ -z "$KS" ]; then
+            echo "Секрета нет, APK остаётся с ключом Gradle"
+            cp "$IN" app-debug.apk
+            exit 0
+          fi
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" sign --ks ~/.android/debug.keystore --ks-pass pass:android \
+            --ks-key-alias androiddebugkey --key-pass pass:android --out app-debug.apk "$IN"
+          echo "=== Ключ, которым подписан итоговый APK ==="
+          "$BT/apksigner" verify --print-certs app-debug.apk | grep -i "SHA-256"
+
       - uses: actions/upload-artifact@v4
         with:
           name: dz-tracker-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: app-debug.apk
 
       - name: Опубликовать релиз
         if: ${{ inputs.release }}
@@ -67,4 +83,4 @@ jobs:
         with:
           tag_name: build-${{ github.run_number }}
           name: Сборка ${{ github.run_number }}
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: app-debug.apk
