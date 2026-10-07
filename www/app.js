@@ -79,7 +79,7 @@ function detectSubject(str) {
   const t = norm(str);
   let best = null, bestLen = 0;
   for (const s of state.subjects) {
-    for (const k of s.kw) {
+    for (const k of s.kw.concat((state.userKw && state.userKw[s.id]) || [])) {
       const kk = norm(k);
       const re = new RegExp(`(^|[^а-яa-z0-9])${reEsc(kk)}${kk.length <= 3 ? '(?![а-яa-z0-9])' : ''}`);
       if (re.test(t) && kk.length > bestLen) { best = s; bestLen = kk.length; }
@@ -213,7 +213,7 @@ let tab = 'today';
 function render() {
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   $('#quick').hidden = tab !== 'today';
-    ({ today: renderToday, points: renderPoints, grades: renderGrades }[tab] || (() => renderStub(tab)))();
+  ({ today: renderToday, points: renderPoints, grades: renderGrades, settings: renderSettings }[tab] || (() => renderStub(tab)))();
 }
 $('#nav').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -523,11 +523,11 @@ const setStat = t => { const el = $('#dstat'); if (el) el.textContent = t; };
 async function runSync() {
   try {
     const r = await syncDiary(setStat);
-    renderPoints();
+    render();
     alert(`Готово: ${r.count} дисциплин, ${r.period}` + (r.added.length ? `\nНовые предметы: ${r.added.join(', ')}` : ''));
   } catch (e) {
     if (e.auth) {
-      auth = { email: auth.email }; saveAuth(); renderPoints();
+      auth = { email: auth.email }; saveAuth(); render();
       alert('Вход устарел, войди снова. Ответ сервера: ' + e.message);
     } else {
       setStat('Ошибка: ' + e.message);
@@ -570,8 +570,72 @@ $('#screen').addEventListener('submit', async e => {
 $('#screen').addEventListener('click', e => {
   const b = e.target.closest('[data-act="sync"], [data-act="logout"]');
   if (!b) return;
-  if (b.dataset.act === 'logout') { auth = { email: auth.email }; saveAuth(); renderPoints(); return; }
+  if (b.dataset.act === 'logout') { auth = { email: auth.email }; saveAuth(); render(); return; }
   b.disabled = true;
   runSync().finally(() => { b.disabled = false; });
+});
+/* ---------- экран «Настройки» ---------- */
+function renderSettings() {
+  const kwRows = state.subjects.map(s => `<label class="kwrow">
+    <span class="chip" style="background:${s.color}">${esc(s.short)}</span>
+    <input data-kw="${s.id}" value="${esc(((state.userKw || {})[s.id] || []).join(', '))}" placeholder="свои слова через запятую">
+  </label>`).join('');
+  $('#screen').innerHTML = `
+    <div class="head"><h1>Настройки</h1></div>
+    <section class="sec"><h2>Дневник</h2>${diaryCard()}</section>
+    <section class="sec"><h2>Свои слова для предметов</h2>
+      <div class="sl pad">Фамилии преподавателей, сокращения. Через запятую, например: бобрик, тесты</div>
+      <div class="subj">${kwRows}</div></section>
+    <section class="sec"><h2>Данные</h2><div class="subj dcard">
+      <div class="sl">Резервная копия нужна, чтобы не потерять задания при переустановке. Пароль и токены в неё не попадают.</div>
+      <div class="btns2"><button class="mini" data-act="export">Скопировать копию</button>
+      <button class="mini ghost" data-act="import">Восстановить</button></div>
+      <textarea id="backup" placeholder="Для восстановления вставь сюда копию"></textarea>
+      <button class="mini danger" data-act="wipe">Удалить все задания</button></div></section>
+    <section class="sec"><h2>Приложение</h2><div class="subj dcard">
+      <div class="sl">Сборка ${window.BUILD || 0}</div>
+      <button class="mini" data-act="upd">Проверить обновление</button></div></section>`;
+}
+
+async function exportBackup() {
+  const data = { v: 1, tasks: state.tasks, grades: state.grades, userKw: state.userKw || {}, visible: state.visible || null };
+  const text = JSON.stringify(data);
+  const ta = $('#backup');
+  ta.value = text; ta.select();
+  try {
+    await navigator.clipboard.writeText(text);
+    alert('Копия скопирована. Вставь её, например, в «Избранное» в Telegram.');
+  } catch (e) {
+    alert('Копия лежит в поле ниже: выдели её и скопируй вручную.');
+  }
+}
+
+function importBackup() {
+  let d;
+  try { d = JSON.parse($('#backup').value.trim()); } catch (e) { alert('Это не похоже на копию'); return; }
+  if (!d || !Array.isArray(d.tasks)) { alert('В копии нет заданий'); return; }
+  if (!confirm(`Заменить текущие задания (${state.tasks.length}) на ${d.tasks.length} из копии?`)) return;
+  state.tasks = d.tasks;
+  if (d.grades) state.grades = d.grades;
+  state.userKw = d.userKw || {};
+  state.visible = d.visible || undefined;
+  save();
+  location.reload();
+}
+
+$('#screen').addEventListener('click', e => {
+  const b = e.target.closest('[data-act="export"], [data-act="import"], [data-act="wipe"]');
+  if (!b) return;
+  if (b.dataset.act === 'export') exportBackup();
+  else if (b.dataset.act === 'import') importBackup();
+  else if (confirm('Удалить все задания? Это нельзя отменить.')) { state.tasks = []; save(); render(); }
+});
+
+$('#screen').addEventListener('change', e => {
+  const id = e.target.dataset && e.target.dataset.kw;
+  if (!id) return;
+  state.userKw = state.userKw || {};
+  state.userKw[id] = e.target.value.split(',').map(x => x.trim()).filter(Boolean);
+  save();
 });
 render();
