@@ -115,3 +115,4 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .btn-del { background: var(--rose); color: var(--rose-d); }
 .btn-x { background: var(--lilac); color: var(--ink); }
 .sub a { color: var(--lilac-d); text-decoration: underline; }
+.upd { border: 0; background: var(--lilac); color: var(--ink); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 12px; }
