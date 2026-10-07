@@ -21,15 +21,13 @@ function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
     if (s && Array.isArray(s.subjects) && Array.isArray(s.tasks)) {
-      s.subjects = fresh();   // предметы всегда берём из кода
+      s.subjects = fresh();
+      s.grades = s.grades || { 3: 50, 4: 70, 5: 90 };
+      s.diary = s.diary || {};
       return s;
     }
   } catch (e) { /* пусто или битые данные */ }
-  return {
-    subjects: fresh(),
-    tasks: [],
-    grades: { 3: 50, 4: 70, 5: 90 },
-  };
+  return { subjects: fresh(), tasks: [], grades: { 3: 50, 4: 70, 5: 90 }, diary: {} };
 }
 const state = load();
 const save = () => localStorage.setItem(KEY, JSON.stringify(state));
@@ -153,7 +151,8 @@ function renderToday() {
   const done = state.tasks.filter(x => x.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 15);
   const openCount = state.tasks.length - state.tasks.filter(x => x.done).length;
 
-  const dateStr = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+  const d0 = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateStr = d0.charAt(0).toUpperCase() + d0.slice(1);
   const stats = [
     g.over.length ? `<span class="stat bad">просрочено: ${g.over.length}</span>` : '',
     g.today.length ? `<span class="stat warn">на сегодня: ${g.today.length}</span>` : '',
