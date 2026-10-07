@@ -149,3 +149,5 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .kwrow:last-child { margin-bottom: 0; }
 .kwrow input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border: 2px solid var(--lilac); border-radius: 12px; font: inherit; color: var(--ink); background: #fff; }
 .sl.pad { margin: 0 4px 6px; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 80px); background: var(--ink); color: #fff; padding: 9px 14px; border-radius: 12px; font-size: 13px; max-width: 86vw; text-align: center; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+#toast.show { opacity: 1; }
