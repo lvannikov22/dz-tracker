@@ -213,7 +213,7 @@ let tab = 'today';
 function render() {
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   $('#quick').hidden = tab !== 'today';
-  ({ today: renderToday, points: renderPoints, grades: renderGrades, settings: renderSettings }[tab] || (() => renderStub(tab)))();
+  ({ today: renderToday, week: renderWeek, points: renderPoints, grades: renderGrades, settings: renderSettings }[tab] || (() => renderStub(tab)))();
 }
 $('#nav').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -665,5 +665,57 @@ async function checkUpdate() {
 }
 document.addEventListener('click', e => {
   if (e.target.closest('[data-act="upd"]')) checkUpdate();
+});
+/* ---------- экран «Неделя» ---------- */
+let weekOffset = 0;
+
+function weekStart(off) {
+  const d = parseYmd(today());
+  const dow = (d.getDay() + 6) % 7; // 0 = понедельник
+  d.setDate(d.getDate() - dow + off * 7);
+  return ymd(d);
+}
+
+function renderWeek() {
+  const start = weekStart(weekOffset), t = today();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const end = days[6];
+  const fmt = (s, o) => parseYmd(s).toLocaleDateString('ru-RU', o);
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const inWeek = state.tasks.filter(x => x.due && x.due >= start && x.due <= end);
+  const doneCount = inWeek.filter(x => x.done).length;
+  const over = weekOffset === 0
+    ? state.tasks.filter(x => !x.done && x.due && x.due < start).sort((a, b) => a.due.localeCompare(b.due))
+    : [];
+  const order = (a, b) => (a.done - b.done) || (a.created - b.created);
+
+  const daysHtml = days.map(d => {
+    const list = state.tasks.filter(x => x.due === d).sort(order);
+    const isToday = d === t;
+    const title = `${cap(fmt(d, { weekday: 'long' }))}, ${fmt(d, { day: 'numeric', month: 'short' })}`;
+    return `<section class="sec${isToday ? ' today' : ''}${d < t ? ' past' : ''}">
+      <h2>${title}${isToday ? ' · сегодня' : ''}${list.length ? ' · ' + list.length : ''}</h2>
+      ${list.length ? list.map(card).join('') : '<div class="dayempty">нет заданий</div>'}</section>`;
+  }).join('');
+
+  $('#screen').innerHTML = `
+    <div class="head"><h1>Неделя</h1>
+      <div class="sub">${fmt(start, { day: 'numeric', month: 'short' })} – ${fmt(end, { day: 'numeric', month: 'short' })} · заданий: ${inWeek.length}, сделано: ${doneCount}</div>
+      <div class="wk">
+        <button class="mini ghost" data-wk="-1">‹ Назад</button>
+        <button class="mini" data-wk="now">Эта неделя</button>
+        <button class="mini ghost" data-wk="1">Вперёд ›</button>
+      </div></div>
+    ${section('Просрочено', 'over', over)}
+    ${daysHtml}`;
+}
+
+$('#screen').addEventListener('click', e => {
+  const b = e.target.closest('[data-wk]');
+  if (!b) return;
+  weekOffset = b.dataset.wk === 'now' ? 0 : weekOffset + Number(b.dataset.wk);
+  renderWeek();
+  window.scrollTo(0, 0);
 });
 render();
