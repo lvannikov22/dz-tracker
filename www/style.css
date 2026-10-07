@@ -116,3 +116,25 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .btn-x { background: var(--lilac); color: var(--ink); }
 .sub a { color: var(--lilac-d); text-decoration: underline; }
 .upd { border: 0; background: var(--lilac); color: var(--ink); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 12px; }
+.subjs { margin-top: 12px; }
+.subj { background: var(--card); border-radius: 14px; margin-bottom: 8px; padding: 10px 12px; box-shadow: 0 1px 4px rgba(120, 100, 180, .08); }
+.subj summary { list-style: none; position: relative; cursor: pointer; padding-right: 44px; }
+.subj summary::-webkit-details-marker { display: none; }
+.subj summary .grade { position: absolute; right: 0; top: 0; }
+.sl { display: block; font-size: 12px; color: var(--ink2); margin-top: 3px; }
+.bar { display: block; height: 6px; background: var(--lilac); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--lilac-d); border-radius: 999px; }
+.srow { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 7px 0 0; margin-top: 7px; border-top: 1px solid var(--lilac); }
+.srow.muted { color: var(--ink2); }
+.grade { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; font-weight: 700; font-size: 17px; }
+.g0 { background: #eeeaf5; color: var(--ink2); }
+.g2 { background: var(--rose); color: var(--rose-d); }
+.g3 { background: var(--yellow); color: var(--yellow-d); }
+.g4 { background: var(--lilac); color: #6d57c4; }
+.g5 { background: var(--mint); color: #2f9e6a; }
+.grow { display: flex; align-items: center; gap: 10px; }
+.grow .gi { flex: 1; min-width: 0; }
+.grow .grade { width: 44px; height: 44px; font-size: 22px; flex: none; }
+.bounds { display: flex; gap: 8px; }
+.bounds label { flex: 1; font-size: 12px; color: var(--ink2); }
+.bounds input { display: block; width: 100%; margin-top: 3px; padding: 8px 10px; border: 2px solid var(--lilac); border-radius: 12px; font: inherit; color: var(--ink); background: #fff; }
