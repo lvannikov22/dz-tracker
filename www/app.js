@@ -384,7 +384,7 @@ function renderPoints() {
   $('#screen').innerHTML = `
     <div class="head"><h1>Баллы</h1>
       <div class="sub">Баллы вносятся в карточке задания: нажми на задание</div></div>
-    <div class="subjs">${cards}</div>`;
+    <div class="subjs">${diaryCard()}${cards}</div>`;
 }
 
 /* ---------- экран «Оценки» ---------- */
