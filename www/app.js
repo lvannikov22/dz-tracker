@@ -370,7 +370,9 @@ function renderPoints() {
       ? `мои: ${fmtN(r.my.score)} из ${fmtN(r.my.max)} · ${Math.round(r.my.pct)}%`
       : 'мои: пока нет баллов';
     const diLine = r.di
-      ? `дневник: ${fmtN(r.di.score)} из ${fmtN(r.di.max)} · ${Math.round(r.di.pct)}%` +
+      ? (r.di.pct != null
+          ? `дневник: ${fmtN(r.di.score)} из ${fmtN(r.di.max)} · ${Math.round(r.di.pct)}%`
+          : 'дневник: баллов пока нет') +
         (r.di.att != null ? ` · посещаемость ${Math.round(r.di.att)}%` : '')
       : 'дневник: не подключён';
     const rows = tasks.length
