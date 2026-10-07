@@ -161,9 +161,9 @@ function renderToday() {
   ].join('');
 
   $('#screen').innerHTML = `
-    <div class="head"><h1>${dateStr}</h1><div class="sub">Домашка на сегодня</div>
+    <div class="head"><h1>${dateStr}</h1><div class="sub">Домашка на сегодня · <a data-act="upd">проверить обновление</a> · сборка ${window.BUILD || 0}</div>
       <div class="stats">${stats}</div></div>
-    ${openCount === 0 ? `<div class="empty"><b>Всё сдано 🎉</b>Добавь задание строкой внизу</div>` : ''}<div class="sub">Домашка на сегодня · <a data-act="upd">проверить обновление</a> · сборка ${window.BUILD || 0}</div>
+    ${openCount === 0 ? `<div class="empty"><b>Всё сдано 🎉</b>Добавь задание строкой внизу</div>` : ''}
     ${section('Просрочено', 'over', g.over)}
     ${section('Сегодня', 'today', g.today)}
     ${section('Ближайшие 3 дня', 'soon', g.soon)}
