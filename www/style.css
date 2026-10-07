@@ -18,7 +18,7 @@ html, body {
 }
 
 /* заголовок */
-.head h1 { margin: 0; font-size: 22px; text-transform: capitalize; }
+.head h1 { margin: 0; font-size: 22px; }
 .head .sub { color: var(--ink2); font-size: 13px; margin-top: 2px; }
 .stats { display: flex; gap: 6px; margin: 10px 0 4px; flex-wrap: wrap; }
 .stat { padding: 4px 10px; border-radius: 999px; font-size: 12px; background: var(--lilac); }
