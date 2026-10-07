@@ -185,7 +185,7 @@ let tab = 'today';
 function render() {
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   $('#quick').hidden = tab !== 'today';
-  if (tab === 'today') renderToday(); else renderStub(tab);
+    ({ today: renderToday, points: renderPoints, grades: renderGrades }[tab] || (() => renderStub(tab)))();
 }
 $('#nav').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -295,5 +295,102 @@ document.addEventListener('click', e => {
 });
   render();
 });
+/* ---------- расчёт баллов и оценок ---------- */
+const fmtN = n => Math.round(n * 10) / 10;
+const pct = (s, m) => (m > 0 && s != null ? (s / m) * 100 : null);
 
+function myStats(subjectId) {
+  let score = 0, max = 0, n = 0;
+  state.tasks.forEach(t => {
+    if (t.subjectId !== subjectId || t.score == null || !(t.max > 0)) return;
+    score += t.score; max += t.max; n++;
+  });
+  return { score, max, n, pct: pct(score, max) };
+}
+
+function diaryStats(subjectId) {
+  const d = state.diary[subjectId];
+  return d ? { score: d.score, max: d.max, att: d.attendance, pct: pct(d.score, d.max) } : null;
+}
+
+function gradeFor(p) {
+  if (p == null) return null;
+  const g = state.grades;
+  return p >= g[5] ? 5 : p >= g[4] ? 4 : p >= g[3] ? 3 : 2;
+}
+
+function subjectResult(subjectId) {
+  const my = myStats(subjectId), di = diaryStats(subjectId);
+  const a = my.pct, b = di ? di.pct : null;
+  let best = null, source = null;
+  if (a != null && (b == null || a >= b)) { best = a; source = 'мои баллы'; }
+  else if (b != null) { best = b; source = 'дневник'; }
+  return { my, di, pct: best, source, grade: gradeFor(best) };
+}
+
+const gradeBadge = g => `<span class="grade ${g ? 'g' + g : 'g0'}">${g ?? '—'}</span>`;
+const bar = p => `<span class="bar"><i style="width:${Math.min(100, Math.max(0, p ?? 0))}%"></i></span>`;
+
+/* ---------- экран «Баллы» ---------- */
+function renderPoints() {
+  const cards = state.subjects.map(s => {
+    const r = subjectResult(s.id);
+    const tasks = state.tasks
+      .filter(t => t.subjectId === s.id && (t.score != null || t.max != null))
+      .sort((a, b) => (b.due || b.issued || '').localeCompare(a.due || a.issued || ''));
+    const myLine = r.my.n
+      ? `мои: ${fmtN(r.my.score)} из ${fmtN(r.my.max)} · ${Math.round(r.my.pct)}%`
+      : 'мои: пока нет баллов';
+    const diLine = r.di
+      ? `дневник: ${fmtN(r.di.score)} из ${fmtN(r.di.max)} · ${Math.round(r.di.pct)}%` +
+        (r.di.att != null ? ` · посещаемость ${Math.round(r.di.att)}%` : '')
+      : 'дневник: не подключён';
+    const rows = tasks.length
+      ? tasks.map(t => `<div class="srow"><span>${esc(t.title)}</span><b>${t.score ?? '–'}/${t.max ?? '–'}</b></div>`).join('')
+      : '<div class="srow muted">Заданий с баллами пока нет</div>';
+    return `<details class="subj"><summary>
+      <span class="chip" style="background:${s.color}">${esc(s.short)}</span>${gradeBadge(r.grade)}
+      <span class="sl">${myLine}</span><span class="sl">${diLine}</span>${bar(r.pct)}
+    </summary>${rows}</details>`;
+  }).join('');
+  $('#screen').innerHTML = `
+    <div class="head"><h1>Баллы</h1>
+      <div class="sub">Баллы вносятся в карточке задания: нажми на задание</div></div>
+    <div class="subjs">${cards}</div>`;
+}
+
+/* ---------- экран «Оценки» ---------- */
+function renderGrades() {
+  const g = state.grades;
+  const rows = state.subjects.map(s => {
+    const r = subjectResult(s.id);
+    let info = 'пока нет баллов';
+    if (r.pct != null) {
+      info = `${r.source}: ${Math.round(r.pct)}%`;
+      if (r.grade < 5) info += ` · до «${r.grade + 1}» ещё ${fmtN(g[r.grade + 1] - r.pct)}%`;
+    }
+    return `<div class="subj grow"><div class="gi">
+      <span class="chip" style="background:${s.color}">${esc(s.short)}</span>
+      <span class="sl">${info}</span></div>${gradeBadge(r.grade)}</div>`;
+  }).join('');
+  $('#screen').innerHTML = `
+    <div class="head"><h1>Оценки</h1>
+      <div class="sub">Предварительные, по большему из двух: дневник или мои баллы</div></div>
+    <div class="subjs">${rows}</div>
+    <section class="sec"><h2>Границы оценок, %</h2>
+      <div class="bounds">
+        <label>«2» от<input value="0" disabled></label>
+        <label>«3» от<input id="b3" data-b type="number" inputmode="decimal" value="${g[3]}"></label>
+        <label>«4» от<input id="b4" data-b type="number" inputmode="decimal" value="${g[4]}"></label>
+        <label>«5» от<input id="b5" data-b type="number" inputmode="decimal" value="${g[5]}"></label>
+      </div></section>`;
+}
+
+$('#screen').addEventListener('change', e => {
+  if (!e.target.matches('[data-b]')) return;
+  const v = { 3: +$('#b3').value, 4: +$('#b4').value, 5: +$('#b5').value };
+  const ok = [3, 4, 5].every(k => v[k] >= 0 && v[k] <= 100) && v[3] < v[4] && v[4] < v[5];
+  if (!ok) { alert('Границы должны идти по возрастанию, от 0 до 100'); renderGrades(); return; }
+  state.grades = v; save(); renderGrades();
+});
 render();
