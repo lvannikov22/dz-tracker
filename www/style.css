@@ -143,3 +143,9 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .mini.ghost { background: var(--lilac); color: var(--ink); }
 .mini:disabled { opacity: .6; }
 .btns2 { display: flex; gap: 8px; }
+.dcard textarea { display: block; width: 100%; min-height: 70px; margin-top: 8px; padding: 9px 10px; border: 2px solid var(--lilac); border-radius: 12px; font: 12px/1.3 ui-monospace, monospace; color: var(--ink); background: #fff; }
+.mini.danger { background: var(--rose); color: var(--rose-d); }
+.kwrow { display: block; margin-bottom: 8px; }
+.kwrow:last-child { margin-bottom: 0; }
+.kwrow input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border: 2px solid var(--lilac); border-radius: 12px; font: inherit; color: var(--ink); background: #fff; }
+.sl.pad { margin: 0 4px 6px; }
