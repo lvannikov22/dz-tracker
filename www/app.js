@@ -4,24 +4,52 @@
 const KEY = 'dz.v1';
 
 const DEFAULT_SUBJECTS = [
-  { name: 'HTML 5 API', short: 'HTML5 API', color: '#e9e1fa', kw: ['html5', 'html 5', 'api'] },
-  { name: 'HTML/CSS', short: 'HTML/CSS', color: '#d8f2e4', kw: ['html', 'css', 'верстк', 'голубец', 'flex', 'grid'] },
-  { name: 'Web-компоненты', short: 'Web-компоненты', color: '#fff1bf', kw: ['web-компонент', 'веб-компонент', 'веб', 'чернышев', 'чернышёв', 'компонент', 'shadow', 'custom element'] },
-  { name: 'Английский язык А2-В1', short: 'Английский', color: '#fde0e4', kw: ['англ', 'english', 'eng'] },
-  { name: 'Архитектура информационной системы предприятия', short: 'Архитектура ИС', color: '#dbeafe', kw: ['архитектур', 'информационн', 'предприят', 'uml', 'bpmn'] },
-  { name: 'Введение в фреймворки JavaScript', short: 'Фреймворки JS', color: '#ffe8d1', kw: ['фреймворк', 'лидия', 'framework', 'react', 'vue', 'angular', 'svelte', 'js', 'javascript'] },
-  { name: 'Основы работы с технической документацией', short: 'Техдокументация', color: '#e4f5c8', kw: ['техдок', 'рид', 'документац', 'техническ', 'тз'] },
-  { name: 'Тестирование. Проектирование тестов', short: 'Тестирование', color: '#f6dcf3', kw: ['тест', 'qa', 'бобрик', 'чек-лист', 'баг'] },
-  { name: 'Учебная практика Front', short: 'Практика Front', color: '#d9f1f5', kw: ['практик', 'front', 'фронт'] },
-  { name: 'Физическая культура', short: 'Физра', color: '#ece7dc', kw: ['физ', 'физра', 'физкульт', 'спорт', 'норматив'] },
+  // Front
+  { id: 'f1', name: 'HTML 5 API', short: 'HTML5 API', color: '#e9e1fa',
+    dn: ['html 5 api', 'html5'], kw: ['html5', 'html 5', 'api'] },
+  { id: 'f2', name: 'HTML/CSS', short: 'HTML/CSS', color: '#d8f2e4',
+    dn: ['html/css'], kw: ['html', 'css', 'верстк', 'flex', 'grid'] },
+  { id: 'f3', name: 'Web-компоненты', short: 'Web-компоненты', color: '#fff1bf',
+    dn: ['web-компонент', 'веб-компонент', 'компонент'], kw: ['web-компонент', 'веб-компонент', 'компонент', 'shadow', 'custom element'] },
+  { id: 'f4', name: 'Архитектура информационной системы предприятия', short: 'Архитектура ИС', color: '#dbeafe',
+    dn: ['архитектура информационной'], kw: ['архитектур', 'информационн', 'предприят', 'uml', 'bpmn'] },
+  { id: 'f5', name: 'Введение в фреймворки JavaScript', short: 'Фреймворки JS', color: '#ffe8d1',
+    dn: ['введение в фреймворки', 'фреймворки javascript'], kw: ['фреймворк', 'framework', 'react', 'vue', 'angular', 'svelte', 'js', 'javascript'] },
+  { id: 'f6', name: 'Учебная практика Front', short: 'Практика Front', color: '#d9f1f5',
+    dn: ['практика front'], kw: ['практик', 'front', 'фронт'] },
+  // общие
+  { id: 'b3', name: 'Английский язык А2-В1', short: 'Английский', color: '#fde0e4',
+    dn: ['английский'], kw: ['англ', 'english', 'eng'] },
+  { id: 'b5', name: 'Основы работы с технической документацией', short: 'Техдокументация', color: '#e4f5c8',
+    dn: ['технической документацией', 'техническ'], kw: ['техдок', 'документац', 'техническ', 'тз'] },
+  { id: 'b7', name: 'Тестирование. Проектирование тестов', short: 'Тестирование', color: '#f6dcf3',
+    dn: ['тестирование'], kw: ['тест', 'qa', 'чек-лист', 'баг'] },
+  { id: 'b9', name: 'Физическая культура', short: 'Физра', color: '#ece7dc',
+    dn: ['физическая культура', 'физическая'], kw: ['физ', 'физра', 'физкульт', 'спорт', 'норматив'] },
+  // Backend
+  { id: 'b1', name: 'Автоматизация развёртывания и управления приложениями', short: 'Автоматизация', color: '#e9e1fa',
+    dn: ['автоматизация развертывания'], kw: ['автоматизац', 'развертыван', 'deploy', 'docker', 'докер', 'ci/cd', 'ansible'] },
+  { id: 'b2', name: 'Алгоритмы и структуры данных', short: 'Алгоритмы', color: '#d8f2e4',
+    dn: ['алгоритмы и структуры'], kw: ['алгоритм', 'структур', 'сортировк', 'дерево', 'деревья', 'асд'] },
+  { id: 'b4', name: 'Основы Linux', short: 'Linux', color: '#fff1bf',
+    dn: ['основы linux', 'linux'], kw: ['linux', 'линукс', 'bash', 'терминал', 'shell'] },
+  { id: 'b6', name: 'Разработка на Node.js с использованием фреймворков', short: 'Node.js', color: '#dbeafe',
+    dn: ['node.js', 'разработка на node'], kw: ['node', 'нод', 'express', 'nest', 'фреймворк', 'framework', 'npm'] },
+  { id: 'b8', name: 'Учебная практика Back', short: 'Практика Back', color: '#d9f1f5',
+    dn: ['практика back'], kw: ['практик', 'back', 'бэк', 'бек', 'бекенд', 'бэкенд'] },
+  { id: 'b10', name: 'Язык программирования Go on web', short: 'Go', color: '#ffe8d1',
+    dn: ['go on web', 'программирования go', 'язык программирования'], kw: ['golang', 'go', 'горутин'] },
 ];
 
+const PALETTE_EXTRA = ['#e9e1fa', '#d8f2e4', '#fff1bf', '#fde0e4', '#dbeafe', '#ffe8d1'];
+
 function load() {
-  const fresh = () => DEFAULT_SUBJECTS.map((s, i) => ({ id: 's' + (i + 1), ...s }));
+  const fresh = () => DEFAULT_SUBJECTS.map(s => ({ ...s }));
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
     if (s && Array.isArray(s.subjects) && Array.isArray(s.tasks)) {
-      s.subjects = fresh();
+      const vis = s.visible;
+      s.subjects = fresh().filter(x => !vis || vis.includes(x.id)).concat(s.subjects.filter(x => x.extra));
       s.grades = s.grades || { 3: 50, 4: 70, 5: 90 };
       s.diary = s.diary || {};
       return s;
@@ -392,5 +420,158 @@ $('#screen').addEventListener('change', e => {
   const ok = [3, 4, 5].every(k => v[k] >= 0 && v[k] <= 100) && v[3] < v[4] && v[4] < v[5];
   if (!ok) { alert('Границы должны идти по возрастанию, от 0 до 100'); renderGrades(); return; }
   state.grades = v; save(); renderGrades();
+});
+/* ---------- дневник колледжа ---------- */
+const API = 'https://api.newlxp.ru/graphql';
+const AUTH_KEY = 'dz.auth';
+const loadAuth = () => { try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || {}; } catch (e) { return {}; } };
+let auth = loadAuth();
+const saveAuth = () => localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+
+const Q_SIGNIN = `query SignIn($input: SignInInput!) { signIn(input: $input) { accessToken refreshToken } }`;
+const Q_ME = `query GetMe { getMe { id student { id mainFormsEducation { currentForm { organizationId } } suborganizations_V2 { suborganization { organizationId } } } } }`;
+const Q_PERIODS = `query GetStudyPeriodsForStudentDisciplinesTable($input: GetStudyPeriodsForStudentInput!) { getStudyPeriodsForStudent(input: $input) { id name startDate endDate status archivedAt } }`;
+const Q_TABLE = `query SearchStudentDisciplinesForDisciplinesTableWithPeriod($input: SearchStudentDisciplinesInput!, $studyPeriodEndDate: String) {
+  searchStudentDisciplines(input: $input) {
+    disciplineId
+    discipline { id name maxScore }
+    disciplineAttendance { percent }
+    scoreForAnsweredTasks
+    maxScoreForAnsweredTasks
+    disciplineGrade(studyPeriodEndDate: $studyPeriodEndDate)
+  }
+}`;
+
+async function gql(operationName, query, variables, withToken = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (withToken && auth.access) headers.Authorization = 'Bearer ' + auth.access;
+  const res = await fetch(API, { method: 'POST', headers, body: JSON.stringify({ operationName, query, variables }) });
+  let json = null;
+  try { json = await res.json(); } catch (e) { /* не JSON */ }
+  if (json && json.errors && json.errors.length) {
+    const err = new Error(json.errors[0].message || 'ошибка сервера');
+    err.auth = /auth|token|unauthor|forbidden|jwt/i.test(JSON.stringify(json.errors[0]));
+    throw err;
+  }
+  if (!res.ok || !json) {
+    const err = new Error('HTTP ' + res.status);
+    err.auth = res.status === 401 || res.status === 403;
+    throw err;
+  }
+  return json.data;
+}
+
+async function syncDiary(setStatus) {
+  setStatus('Получаю профиль…');
+  const me = await gql('GetMe', Q_ME, {});
+  const student = me.getMe && me.getMe.student;
+  if (!student) throw new Error('в профиле не нашёл студента');
+  const studentId = student.id;
+  const cf = student.mainFormsEducation && student.mainFormsEducation.currentForm;
+  const sub = (student.suborganizations_V2 || [])[0];
+  const orgId = (cf && cf.organizationId) || (sub && sub.suborganization && sub.suborganization.organizationId);
+  if (!orgId) throw new Error('не нашёл организацию в профиле');
+
+  setStatus('Ищу текущий семестр…');
+  const pd = await gql('GetStudyPeriodsForStudentDisciplinesTable', Q_PERIODS, { input: { studentId } });
+  const now = Date.now();
+  const periods = (pd.getStudyPeriodsForStudent || []).filter(p => !p.archivedAt);
+  const period = periods.filter(p => p.status === 'STARTED').sort((a, b) => b.startDate.localeCompare(a.startDate))[0]
+    || periods.find(p => Date.parse(p.startDate) <= now && now <= Date.parse(p.endDate));
+  if (!period) throw new Error('не нашёл текущий семестр');
+
+  setStatus('Загружаю баллы: ' + period.name + '…');
+  const td = await gql('SearchStudentDisciplinesForDisciplinesTableWithPeriod', Q_TABLE, {
+    input: { studentId, filters: { organizationIds: [orgId], studyPeriodId: period.id, withoutStudyPeriod: false, withAcademicDifference: false } },
+    studyPeriodEndDate: period.endDate,
+  });
+
+  const list = td.searchStudentDisciplines || [];
+  const diary = {}, added = [];
+  list.forEach(x => {
+    const name = x.discipline.name, n = norm(name);
+    let s = state.subjects.find(t => t.diaryId === x.disciplineId)
+      || state.subjects.find(t => t.dn && t.dn.some(k => n.includes(norm(k))));
+    if (!s) {
+      s = {
+        id: 'x' + x.disciplineId.slice(0, 8), diaryId: x.disciplineId, extra: true, name,
+        short: name.length > 22 ? name.slice(0, 21) + '…' : name,
+        color: PALETTE_EXTRA[state.subjects.length % PALETTE_EXTRA.length],
+        dn: [n], kw: [norm(name.split(/\s+/)[0])],
+      };
+      state.subjects.push(s); added.push(name);
+    }
+    diary[s.id] = {
+      score: x.scoreForAnsweredTasks, max: x.maxScoreForAnsweredTasks, discMax: x.discipline.maxScore,
+      attendance: x.disciplineAttendance ? x.disciplineAttendance.percent : null, grade: x.disciplineGrade, name,
+    };
+  });
+
+  const matched = new Set(Object.keys(diary));
+  if (matched.size) {
+    state.visible = state.subjects.filter(s => !s.extra && matched.has(s.id)).map(s => s.id);
+    state.subjects = state.subjects.filter(s => s.extra || matched.has(s.id));
+  }
+  state.diary = diary;
+  state.diaryAt = Date.now();
+  save();
+  return { count: list.length, period: period.name, added };
+}
+
+const setStat = t => { const el = $('#dstat'); if (el) el.textContent = t; };
+
+async function runSync() {
+  try {
+    const r = await syncDiary(setStat);
+    renderPoints();
+    alert(`Готово: ${r.count} дисциплин, ${r.period}` + (r.added.length ? `\nНовые предметы: ${r.added.join(', ')}` : ''));
+  } catch (e) {
+    if (e.auth) {
+      auth = { email: auth.email }; saveAuth(); renderPoints();
+      alert('Вход устарел, войди снова. Ответ сервера: ' + e.message);
+    } else {
+      setStat('Ошибка: ' + e.message);
+      alert('Не удалось: ' + e.message);
+    }
+  }
+}
+
+function diaryCard() {
+  const when = state.diaryAt
+    ? new Date(state.diaryAt).toLocaleString('ru-RU', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : null;
+  if (auth.access) {
+    return `<div class="subj dcard"><div class="sl">Дневник подключён${when ? ' · обновлено ' + when : ''}</div>
+      <div class="btns2"><button class="mini" data-act="sync">Обновить баллы</button>
+      <button class="mini ghost" data-act="logout">Выйти</button></div><div class="sl" id="dstat"></div></div>`;
+  }
+  return `<form class="subj dcard" id="diary-form" autocomplete="off">
+    <div class="sl">Войти в дневник колледжа. Пароль нигде не сохраняется.</div>
+    <input id="d-email" type="email" placeholder="Почта" value="${esc(auth.email || '')}">
+    <input id="d-pass" type="password" placeholder="Пароль">
+    <button class="mini" type="submit">Войти и загрузить баллы</button><div class="sl" id="dstat"></div></form>`;
+}
+
+$('#screen').addEventListener('submit', async e => {
+  if (e.target.id !== 'diary-form') return;
+  e.preventDefault();
+  const email = $('#d-email').value.trim(), password = $('#d-pass').value;
+  $('#d-pass').value = '';
+  if (!email || !password) { setStat('Введи почту и пароль'); return; }
+  setStat('Вхожу…');
+  try {
+    const d = await gql('SignIn', Q_SIGNIN, { input: { email, password } }, false);
+    auth = { email, access: d.signIn.accessToken, refresh: d.signIn.refreshToken };
+    saveAuth();
+  } catch (err) { setStat('Не вошёл: ' + err.message); return; }
+  await runSync();
+});
+
+$('#screen').addEventListener('click', e => {
+  const b = e.target.closest('[data-act="sync"], [data-act="logout"]');
+  if (!b) return;
+  if (b.dataset.act === 'logout') { auth = { email: auth.email }; saveAuth(); renderPoints(); return; }
+  b.disabled = true;
+  runSync().finally(() => { b.disabled = false; });
 });
 render();
