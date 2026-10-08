@@ -58,7 +58,10 @@ function load() {
   return { subjects: fresh(), tasks: [], grades: { 3: 50, 4: 70, 5: 90 }, diary: {} };
 }
 const state = load();
-const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+const save = () => {
+  localStorage.setItem(KEY, JSON.stringify(state));
+  if (typeof scheduleSoon === 'function') scheduleSoon();
+};
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 /* ---------- даты ---------- */
@@ -565,6 +568,7 @@ function renderSettings() {
   $('#screen').innerHTML = `
     <div class="head"><h1>Настройки</h1></div>
     <section class="sec"><h2>Дневник</h2>${diaryCard()}</section>
+        ${notifSection()}
     <section class="sec"><h2>Свои слова для предметов</h2>
       <div class="sl pad">Фамилии преподавателей, сокращения. Через запятую, например: бобрик, тесты</div>
       <div class="subj">${kwRows}</div></section>
@@ -718,4 +722,122 @@ $('#screen').addEventListener('click', e => {
   renderWeek();
   window.scrollTo(0, 0);
 });
+/* ---------- уведомления ---------- */
+const lnPlugin = () => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) || null;
+const nset = () => Object.assign({ on: false, time: '18:00', style: 'plain' }, state.notif || {});
+
+function buildDigest(day, style) {
+  const open = state.tasks.filter(x => !x.done && x.due);
+  const over = open.filter(x => x.due < day);
+  const tod = open.filter(x => x.due === day);
+  const tom = open.filter(x => x.due === addDays(day, 1));
+  if (!over.length && !tod.length && !tom.length) return null;
+  const emo = style === 'emoji';
+  const parts = [];
+  if (tod.length) parts.push(emo ? `🔥 Сегодня: ${tod.length}` : `Сегодня сдать: ${tod.length}`);
+  if (tom.length) parts.push(emo ? `⏰ Завтра: ${tom.length}` : `Завтра: ${tom.length}`);
+  if (over.length) parts.push(emo ? `⚠️ Просрочено: ${over.length}` : `Просрочено: ${over.length}`);
+  const lines = [];
+  const block = (title, list) => {
+    if (!list.length) return;
+    lines.push(title);
+    list.slice(0, 5).forEach(x => lines.push(`• ${subj(x.subjectId).short}: ${x.title}`));
+    if (list.length > 5) lines.push(`… и ещё ${list.length - 5}`);
+  };
+  block(emo ? '🔥 Сегодня' : 'Сегодня', tod);
+  block(emo ? '⏰ Завтра' : 'Завтра', tom);
+  block(emo ? '⚠️ Просрочено' : 'Просрочено', over);
+  return { title: emo ? '📚 Домашка' : 'Домашние задания', body: parts.join(' · '), large: lines.join('\n') };
+}
+
+async function rescheduleNotifications() {
+  const LN = lnPlugin();
+  if (!LN) return;
+  const n = nset();
+  try {
+    await LN.cancel({ notifications: Array.from({ length: 14 }, (_, i) => ({ id: 100 + i })) });
+    if (!n.on) return;
+    const [hh, mm] = n.time.split(':').map(Number);
+    const now = new Date(), list = [];
+    for (let i = 0; i < 14; i++) {
+      const day = addDays(today(), i);
+      const at = parseYmd(day);
+      at.setHours(hh, mm, 0, 0);
+      if (at <= now) continue;
+      const m = buildDigest(day, n.style);
+      if (!m) continue;
+      list.push({ id: 100 + i, title: m.title, body: m.body, largeBody: m.large, schedule: { at, allowWhileIdle: true } });
+    }
+    if (list.length) await LN.schedule({ notifications: list });
+  } catch (e) { /* без уведомлений приложение продолжает работать */ }
+}
+
+let schedTimer;
+function scheduleSoon() {
+  clearTimeout(schedTimer);
+  schedTimer = setTimeout(rescheduleNotifications, 1500);
+}
+
+function notifSection() {
+  const n = nset();
+  return `<section class="sec"><h2>Уведомления</h2><div class="subj dcard">
+    <label class="swrow"><span>Ежедневное напоминание</span><input type="checkbox" id="n-on" ${n.on ? 'checked' : ''}></label>
+    <label class="kwrow"><span class="sl">Время</span><input type="time" id="n-time" value="${n.time}"></label>
+    <div class="sl" style="margin-top:8px">Стиль</div>
+    <div class="btns2">
+      <button class="mini ${n.style === 'plain' ? '' : 'ghost'}" data-nstyle="plain">Обычный текст</button>
+      <button class="mini ${n.style === 'emoji' ? '' : 'ghost'}" data-nstyle="emoji">С эмодзи 🔥</button>
+    </div>
+    <button class="mini ghost" data-act="ntest">Показать пример</button>
+    <div class="sl" id="nstat"></div></div></section>`;
+}
+
+const nStat = t => { const el = $('#nstat'); if (el) el.textContent = t; };
+
+async function askNotifPermission() {
+  const LN = lnPlugin();
+  if (!LN) { nStat('Уведомления работают только в установленном приложении'); return false; }
+  try {
+    const p = await LN.requestPermissions();
+    if (p.display === 'granted') return true;
+    nStat('Нет разрешения: включи уведомления для приложения в настройках телефона');
+  } catch (e) { nStat('Ошибка: ' + e.message); }
+  return false;
+}
+
+async function setNotifOn(on) {
+  if (on && !(await askNotifPermission())) { $('#n-on').checked = false; return; }
+  state.notif = { ...nset(), on };
+  save();
+  nStat(on ? 'Включено' : 'Выключено');
+}
+
+async function testNotification() {
+  if (!(await askNotifPermission())) return;
+  const style = nset().style, emo = style === 'emoji';
+  const m = buildDigest(today(), style) || {
+    title: emo ? '📚 Домашка' : 'Домашние задания',
+    body: emo ? '🔥 Сегодня: 1 · ⏰ Завтра: 2' : 'Сегодня сдать: 1 · Завтра: 2',
+  };
+  try {
+    await lnPlugin().schedule({ notifications: [{
+      id: 99, title: m.title, body: m.body, largeBody: m.large,
+      schedule: { at: new Date(Date.now() + 5000), allowWhileIdle: true },
+    }] });
+    nStat('Придёт через 5 секунд, можно свернуть приложение');
+  } catch (e) { nStat('Ошибка: ' + e.message); }
+}
+
+$('#screen').addEventListener('change', e => {
+  if (e.target.id === 'n-on') setNotifOn(e.target.checked);
+  else if (e.target.id === 'n-time') { state.notif = { ...nset(), time: e.target.value || '18:00' }; save(); }
+});
+
+$('#screen').addEventListener('click', e => {
+  const st = e.target.closest('[data-nstyle]');
+  if (st) { state.notif = { ...nset(), style: st.dataset.nstyle }; save(); renderSettings(); return; }
+  if (e.target.closest('[data-act="ntest"]')) testNotification();
+});
+
+scheduleSoon();
 render();
