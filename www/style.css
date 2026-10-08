@@ -156,3 +156,6 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .sec.today .task { box-shadow: 0 0 0 2px var(--yellow); }
 .wk { display: flex; gap: 6px; margin-top: 6px; }
 .wk .mini { flex: 1; margin-top: 0; padding: 8px 6px; font-size: 13px; }
+.swrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
+.swrow input { width: 22px; height: 22px; accent-color: var(--lilac-d); }
+.dcard .swrow input { display: inline-block; width: 22px; margin-top: 0; padding: 0; }
