@@ -273,8 +273,8 @@ function openEditor(id) {
     x.max = num($('#e-max').value);
     save(); closeEditor(); render();
   };
-  $('#e-del').onclick = () => {
-    if (!confirm('Удалить задание?')) return;
+  $('#e-del').onclick = async () => {
+    if (!(await dlgConfirm('Удалить задание?', 'Удалить', true))) return;
     state.tasks = state.tasks.filter(t => t.id !== id);
     save(); closeEditor(); render();
   };
@@ -596,11 +596,11 @@ async function exportBackup() {
   }
 }
 
-function importBackup() {
+async function importBackup() {
   let d;
   try { d = JSON.parse($('#backup').value.trim()); } catch (e) { alert('Это не похоже на копию'); return; }
   if (!d || !Array.isArray(d.tasks)) { alert('В копии нет заданий'); return; }
-  if (!confirm(`Заменить текущие задания (${state.tasks.length}) на ${d.tasks.length} из копии?`)) return;
+  if (!(await dlgConfirm(`Заменить текущие задания (${state.tasks.length}) на ${d.tasks.length} из копии?`, 'Заменить'))) return;
   state.tasks = d.tasks;
   if (d.grades) state.grades = d.grades;
   state.userKw = d.userKw || {};
@@ -609,12 +609,12 @@ function importBackup() {
   location.reload();
 }
 
-$('#screen').addEventListener('click', e => {
+$('#screen').addEventListener('click', async e => {
   const b = e.target.closest('[data-act="export"], [data-act="import"], [data-act="wipe"]');
   if (!b) return;
   if (b.dataset.act === 'export') exportBackup();
   else if (b.dataset.act === 'import') importBackup();
-  else if (confirm('Удалить все задания? Это нельзя отменить.')) { state.tasks = []; save(); render(); }
+  else if (await dlgConfirm('Удалить все задания? Это нельзя отменить.', 'Удалить', true)) { state.tasks = []; save(); render(); }
 });
 
 $('#screen').addEventListener('change', e => {
@@ -660,7 +660,7 @@ async function checkUpdate() {
     const asset = (rel.assets || []).find(a => a.name.endsWith('.apk'));
     if (!asset || !(n > cur)) { toast(`У тебя последняя версия (сборка ${cur})`); return; }
     toast(`Есть сборка ${n}`, 2000);
-    if (confirm(`Есть новая сборка ${n} (у тебя ${cur}). Скачать?`)) location.href = asset.browser_download_url;
+    if (await dlgConfirm(`Есть новая сборка ${n} (у тебя ${cur}). Скачать?`, 'Скачать')) location.href = asset.browser_download_url;
   } catch (e) {
     toast('Не удалось проверить: ' + e.message, 6000);
   } finally {
@@ -840,4 +840,57 @@ $('#screen').addEventListener('click', e => {
 });
 
 scheduleSoon();
+/* ---------- свои окна ---------- */
+function dlg(text, buttons, dismissValue) {
+  return new Promise(resolve => {
+    const back = document.createElement('div');
+    back.className = 'dlg-back';
+    back.innerHTML = `<div class="dlg" role="dialog"><p>${esc(text)}</p>
+      <div class="btns">${buttons.map((b, i) => `<button class="${b.cls}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+    const close = v => { back.remove(); resolve(v); };
+    back.addEventListener('click', e => {
+      const b = e.target.closest('button[data-i]');
+      if (b) close(buttons[Number(b.dataset.i)].value);
+      else if (e.target === back) close(dismissValue);
+    });
+    document.body.appendChild(back);
+  });
+}
+const dlgAlert = text => dlg(String(text), [{ label: 'Ок', cls: 'btn-save', value: true }], true);
+const dlgConfirm = (text, ok = 'Ок', danger = false) => dlg(text, [
+  { label: 'Отмена', cls: 'btn-x', value: false },
+  { label: ok, cls: danger ? 'btn-del' : 'btn-save', value: true },
+], false);
+window.alert = text => { dlgAlert(text); };
+
+/* ---------- авто-обновление баллов ---------- */
+const AUTO_SYNC_MS = 3 * 3600 * 1000;
+let lastAutoTry = 0;
+
+async function autoSync() {
+  if (!auth.access || autoSync.busy) return;
+  const now = Date.now();
+  if (state.diaryAt && now - state.diaryAt < AUTO_SYNC_MS) return;
+  if (now - lastAutoTry < 5 * 60 * 1000) return;
+  lastAutoTry = now;
+  autoSync.busy = true;
+  try {
+    await syncDiary(() => {});
+    if (tab === 'points' || tab === 'grades') render();
+    toast('Баллы из дневника обновлены', 2500);
+  } catch (e) {
+    if (e.auth) {
+      auth = { email: auth.email }; saveAuth();
+      if (tab === 'points') render();
+      toast('Вход в дневник устарел: войди заново на экране «Баллы»', 6000);
+    } else {
+      toast('Баллы не обновились: ' + (/fetch|network/i.test(e.message) ? 'нет сети' : e.message), 3500);
+    }
+  } finally {
+    autoSync.busy = false;
+  }
+}
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) autoSync(); });
+autoSync();
 render();
