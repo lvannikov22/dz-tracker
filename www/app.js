@@ -216,9 +216,13 @@ function renderStub(tab) {
 /* ---------- навигация ---------- */
 let tab = 'today';
 function render() {
-  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === (tab === 'all' ? 'today' : tab)));
   $('#quick').hidden = tab !== 'today';
-  ({ today: renderToday, week: renderWeek, points: renderPoints, grades: renderGrades, settings: renderSettings }[tab] || (() => renderStub(tab)))();
+  ({ today: renderToday, week: renderWeek, points: renderPoints, grades: renderGrades, settings: renderSettings, all: renderAll }[tab] || (() => renderStub(tab)))();
+  if (tab === 'today') {
+    const h = document.querySelector('#screen .head');
+    if (h) h.insertAdjacentHTML('beforeend', '<button class="mini ghost allbtn" data-go="all">🔎 Все задания</button>');
+  }
 }
 $('#nav').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -906,4 +910,61 @@ function progressBlock(label, done, total) {
   return `<div class="prog"><div class="sl">${label}: ${done} из ${total} · ${p}%</div>
     <span class="bar"><i style="width:${p}%"></i></span></div>`;
 }
+/* ---------- экран «Все задания» ---------- */
+const allFilter = { q: '', status: 'all', subject: '' };
+
+function renderAll() {
+  const f = allFilter;
+  const st = [['all', 'Все'], ['active', 'Активные'], ['done', 'Сделанные'], ['overdue', 'Просрочены']];
+  const opts = ['<option value="">Все предметы</option>']
+    .concat(state.subjects.map(s => `<option value="${s.id}"${s.id === f.subject ? ' selected' : ''}>${esc(s.short)}</option>`))
+    .concat(`<option value="-"${f.subject === '-' ? ' selected' : ''}>Без предмета</option>`).join('');
+  $('#screen').innerHTML = `
+    <div class="head"><button class="mini ghost backbtn" data-go="today">‹ Назад</button><h1>Все задания</h1></div>
+    <div class="subj dcard">
+      <input id="a-q" type="search" placeholder="🔎 Название, предмет или дата" value="${esc(f.q)}">
+      <div class="chips">${st.map(([k, l]) => `<button class="fchip${f.status === k ? ' on' : ''}" data-st="${k}">${l}</button>`).join('')}</div>
+      <select id="a-subj">${opts}</select>
+      <div class="sl" id="a-count"></div>
+    </div>
+    <div id="alllist"></div>`;
+  fillAll();
+}
+
+function fillAll() {
+  const f = allFilter, t = today(), q = norm(f.q.trim());
+  const hasSubj = x => state.subjects.some(s => s.id === x.subjectId);
+  const list = state.tasks.filter(x => {
+    if (f.subject === '-' ? hasSubj(x) : (f.subject && x.subjectId !== f.subject)) return false;
+    if (f.status === 'active' && x.done) return false;
+    if (f.status === 'done' && !x.done) return false;
+    if (f.status === 'overdue' && !(!x.done && x.due && x.due < t)) return false;
+    if (q) {
+      const s = subj(x.subjectId);
+      const hay = norm([x.title, s.name, s.short, x.due ? fmtShort(x.due) : '', x.due || ''].join(' '));
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const byDue = (a, b) => (a.due || '9999').localeCompare(b.due || '9999') || a.created - b.created;
+  const open = list.filter(x => !x.done).sort(byDue);
+  const done = list.filter(x => x.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+  const shown = open.concat(done);
+  $('#a-count').textContent = `Найдено: ${shown.length}` + (shown.length > 200 ? ' · показаны первые 200' : '');
+  $('#alllist').innerHTML = shown.slice(0, 200).map(card).join('')
+    || '<div class="empty"><b>Ничего не найдено</b>Попробуй другой запрос или фильтр</div>';
+}
+
+$('#screen').addEventListener('click', e => {
+  const g = e.target.closest('[data-go]');
+  if (g) { tab = g.dataset.go; render(); window.scrollTo(0, 0); return; }
+  const s = e.target.closest('[data-st]');
+  if (s) { allFilter.status = s.dataset.st; renderAll(); }
+});
+$('#screen').addEventListener('input', e => {
+  if (e.target.id === 'a-q') { allFilter.q = e.target.value; fillAll(); }
+});
+$('#screen').addEventListener('change', e => {
+  if (e.target.id === 'a-subj') { allFilter.subject = e.target.value; fillAll(); }
+});
 render();
