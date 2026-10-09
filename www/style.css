@@ -163,3 +163,6 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .dlg { background: #fff; border-radius: 18px; padding: 18px; width: 100%; max-width: 340px; box-shadow: 0 8px 30px rgba(58, 53, 82, .25); }
 .dlg p { margin: 0 0 14px; white-space: pre-line; overflow-wrap: anywhere; }
 .dlg .btns { margin-top: 0; }
+.prog { margin-top: 10px; }
+.prog .bar { height: 8px; margin-top: 5px; }
+.prog .bar i { background: var(--mint-d); }
