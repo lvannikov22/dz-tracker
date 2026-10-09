@@ -657,22 +657,25 @@ async function checkUpdate() {
   const cur = Number(window.BUILD || 0);
   toast('Проверяю обновление…', 0);
   try {
-    let rel = null, lastErr = null;
-    for (let i = 0; i < 2 && !rel; i++) {
+    let text = null, lastErr = null;
+    for (let i = 0; i < 2 && text == null; i++) {
       try {
-        const r = await withTimeout(fetch(`https://api.github.com/repos/${REPO}/releases/latest`), 8000);
+        const r = await withTimeout(fetch(`https://github.com/${REPO}/releases.atom`), 8000);
         if (!r.ok) throw new Error('GitHub ответил ' + r.status);
-        rel = await r.json();
+        text = await r.text();
       } catch (e) { lastErr = e; }
     }
-    if (!rel) throw lastErr;
-    const n = Number(String(rel.tag_name).replace(/\D/g, ''));
-    const asset = (rel.assets || []).find(a => a.name.endsWith('.apk'));
-    if (!asset || !(n > cur)) { toast(`У тебя последняя версия (сборка ${cur})`); return; }
+    if (text == null) throw lastErr;
+    const nums = [...text.matchAll(/releases\/tag\/build-(\d+)/g)].map(m => Number(m[1]));
+    const n = nums.length ? Math.max(...nums) : 0;
+    if (!(n > cur)) { toast(`У тебя последняя версия (сборка ${cur})`); return; }
     toast(`Есть сборка ${n}`, 2000);
-    if (await dlgConfirm(`Есть новая сборка ${n} (у тебя ${cur}). Скачать?`, 'Скачать')) location.href = asset.browser_download_url;
+    if (await dlgConfirm(`Есть новая сборка ${n} (у тебя ${cur}). Скачать?`, 'Скачать')) {
+      location.href = `https://github.com/${REPO}/releases/download/build-${n}/app-debug.apk`;
+    }
   } catch (e) {
-    toast('Не удалось проверить: ' + e.message, 6000);
+    const limit = /403|429/.test(e.message);
+    toast(limit ? 'GitHub временно ограничил запросы, попробуй через час' : 'Не удалось проверить: ' + e.message, 6000);
   } finally {
     checkUpdate.busy = false;
   }
