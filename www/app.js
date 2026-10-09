@@ -893,4 +893,11 @@ async function autoSync() {
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) autoSync(); });
 autoSync();
+/* ---------- полоска прогресса ---------- */
+function progressBlock(label, done, total) {
+  if (!total) return '';
+  const p = Math.round((done / total) * 100);
+  return `<div class="prog"><div class="sl">${label}: ${done} из ${total} · ${p}%</div>
+    <span class="bar"><i style="width:${p}%"></i></span></div>`;
+}
 render();
