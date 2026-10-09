@@ -157,7 +157,7 @@ function dueLabel(x) {
 function card(x) {
   const s = subj(x.subjectId);
   const pts = (x.score != null || x.max != null) ? `<span class="pts">${x.score ?? '–'}/${x.max ?? '–'}</span>` : '';
-  return `<div class="task${x.done ? ' done' : ''}" data-id="${x.id}">
+    return `<div class="task${x.done ? ' done' : ''}" data-id="${x.id}" style="--c:${s.color}">
     <button class="chk" data-act="toggle" aria-label="Готово">${x.done ? '✓' : ''}</button>
     <div class="tb">
       <div class="tt">${esc(x.title)}</div>
@@ -240,9 +240,15 @@ $('#screen').addEventListener('click', e => {
 function toggle(id) {
   const x = state.tasks.find(t => t.id === id);
   if (!x) return;
+  const el = document.querySelector(`.task[data-id="${id}"]`);
   x.done = !x.done;
   x.doneAt = x.done ? Date.now() : null;
-  save(); render();
+  save();
+  if (el) {
+    el.classList.toggle('done', x.done);
+    el.classList.add('flash');
+    setTimeout(render, 320);
+  } else render();
 }
 
 function openEditor(id) {
@@ -1012,4 +1018,29 @@ document.addEventListener('click', e => {
 
 darkMq.addEventListener('change', applyTheme);
 applyTheme();
+/* ---------- анимации и иконки меню ---------- */
+function playEnter() {
+  const s = $('#screen');
+  s.classList.remove('enter');
+  void s.offsetWidth;
+  s.classList.add('enter');
+  clearTimeout(playEnter.t);
+  playEnter.t = setTimeout(() => s.classList.remove('enter'), 900);
+}
+$('#nav').addEventListener('click', e => { if (e.target.closest('button')) playEnter(); });
+$('#screen').addEventListener('click', e => { if (e.target.closest('[data-go]')) playEnter(); });
+
+const NAV_ICONS = {
+  today: '<path d="M4 7.5l1.8 1.8L9 6M4 15.5l1.8 1.8L9 14M13 8h7M13 16h7"/>',
+  week: '<rect x="3.5" y="5" width="17" height="15" rx="3.5"/><path d="M3.5 10.5h17M8 3v4M16 3v4"/>',
+  points: '<path d="M12 3.6l2.6 5.2 5.8.9-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.6 9.7l5.8-.9z"/>',
+  grades: '<path d="M2.5 9.5L12 5l9.5 4.5L12 14 2.5 9.5z"/><path d="M6.5 11.8V16c0 1.2 2.5 2.5 5.5 2.5s5.5-1.3 5.5-2.5v-4.2M21.5 9.5V14"/>',
+  settings: '<path d="M4 7h8.5M17 7h3M4 17h3M11.5 17H20"/><circle cx="14.7" cy="7" r="2.2"/><circle cx="9.3" cy="17" r="2.2"/>',
+};
+document.querySelectorAll('#nav button').forEach(b => {
+  const label = b.querySelector('span').textContent;
+  b.innerHTML = `<svg class="nico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${NAV_ICONS[b.dataset.tab] || ''}</svg><span>${label}</span>`;
+});
+
+playEnter();
 render();
