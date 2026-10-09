@@ -172,3 +172,42 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .fchip { border: 0; border-radius: 999px; padding: 6px 12px; background: var(--lilac); color: var(--ink); font: inherit; font-size: 13px; }
 .fchip.on { background: var(--lilac-d); color: #fff; }
 .dcard select { display: block; width: 100%; margin-top: 8px; padding: 9px 10px; border: 2px solid var(--lilac); border-radius: 12px; font: inherit; color: var(--ink); background: #fff; }
+/* ---------- кнопка темы ---------- */
+.theme-btn { position: fixed; z-index: 5; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 14px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--lilac); padding: 0; overflow: hidden; box-shadow: 0 1px 4px rgba(120, 100, 180, .18); }
+.theme-btn .ico { position: absolute; left: 8px; top: 8px; width: 24px; height: 24px; transition: transform .45s cubic-bezier(.3, 1.4, .5, 1), opacity .25s; }
+.theme-btn .moon { color: #8a73d6; }
+.theme-btn .sun { color: #e6b94a; opacity: 0; transform: rotate(-80deg) scale(.4); }
+[data-theme="dark"] .theme-btn .sun { opacity: 1; transform: none; }
+[data-theme="dark"] .theme-btn .moon { opacity: 0; transform: rotate(80deg) scale(.4); }
+.head h1, .head .sub { padding-right: 46px; }
+.btns2 { flex-wrap: wrap; }
+
+/* ---------- тёмная тема ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #171425; --card: #231f35; --field: #2b2644;
+  --lilac: #342d52; --lilac-d: #a892e6;
+  --mint: #1f3a31; --mint-d: #5fc093;
+  --yellow: #3d3519; --yellow-d: #e6b94a;
+  --rose: #3d2530; --rose-d: #e58a98;
+  --ink: #ece8fa; --ink2: #a29cc0;
+}
+[data-theme="dark"] #nav,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .dlg { background: var(--card); }
+[data-theme="dark"] #qin,
+[data-theme="dark"] .panel input,
+[data-theme="dark"] .panel select,
+[data-theme="dark"] .bounds input,
+[data-theme="dark"] .kwrow input,
+[data-theme="dark"] .dcard input,
+[data-theme="dark"] .dcard select,
+[data-theme="dark"] .dcard textarea { background: var(--field); color: var(--ink); }
+[data-theme="dark"] .sec.over .task { background: #33212a; }
+[data-theme="dark"] .sec.today .task { box-shadow: 0 0 0 2px #e6b94a; }
+[data-theme="dark"] .g0 { background: var(--lilac); }
+[data-theme="dark"] .g4 { color: #c9b8ff; }
+[data-theme="dark"] .g5 { color: #7fd1a6; }
+[data-theme="dark"] .chip { color: #3a3552; }
+[data-theme="dark"] #qprev .chip.warn { color: var(--ink); }
+[data-theme="dark"] #toast { background: #ece8fa; color: #171425; }
