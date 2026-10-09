@@ -181,6 +181,8 @@ function renderToday() {
     });
   const done = state.tasks.filter(x => x.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 15);
   const openCount = state.tasks.length - state.tasks.filter(x => x.done).length;
+  const dayAll = state.tasks.filter(x => x.due === t);
+  const dayDone = dayAll.filter(x => x.done).length;
 
   const d0 = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
   const dateStr = d0.charAt(0).toUpperCase() + d0.slice(1);
@@ -192,7 +194,7 @@ function renderToday() {
 
   $('#screen').innerHTML = `
     <div class="head"><h1>${dateStr}</h1><div class="sub">Домашка на сегодня · <button class="upd" data-act="upd">проверить обновление</button> · сборка ${window.BUILD || 0}</div>
-      <div class="stats">${stats}</div></div>
+            <div class="stats">${stats}</div>${progressBlock('Сегодня сдать', dayDone, dayAll.length)}</div>
     ${openCount === 0 ? `<div class="empty"><b>Всё сдано 🎉</b>Добавь задание строкой внизу</div>` : ''}
     ${section('Просрочено', 'over', g.over)}
     ${section('Сегодня', 'today', g.today)}
@@ -358,12 +360,15 @@ function renderPoints() {
           : 'дневник: баллов пока нет') +
         (r.di.att != null ? ` · посещаемость ${Math.round(r.di.att)}%` : '')
       : 'дневник: не подключён';
+    const allT = state.tasks.filter(t => t.subjectId === s.id);
+    const doneT = allT.filter(t => t.done).length;
+    const taskLine = allT.length ? `<span class="sl">заданий выполнено: ${doneT} из ${allT.length}</span>` : '';
     const rows = tasks.length
       ? tasks.map(t => `<div class="srow"><span>${esc(t.title)}</span><b>${t.score ?? '–'}/${t.max ?? '–'}</b></div>`).join('')
       : '<div class="srow muted">Заданий с баллами пока нет</div>';
     return `<details class="subj"><summary>
       <span class="chip" style="background:${s.color}">${esc(s.short)}</span>${gradeBadge(r.grade)}
-      <span class="sl">${myLine}</span><span class="sl">${diLine}</span>${bar(r.pct)}
+            <span class="sl">${myLine}</span><span class="sl">${diLine}</span>${taskLine}${bar(r.pct)}
     </summary>${rows}</details>`;
   }).join('');
   $('#screen').innerHTML = `
@@ -706,6 +711,7 @@ function renderWeek() {
   $('#screen').innerHTML = `
     <div class="head"><h1>Неделя</h1>
       <div class="sub">${fmt(start, { day: 'numeric', month: 'short' })} – ${fmt(end, { day: 'numeric', month: 'short' })} · заданий: ${inWeek.length}, сделано: ${doneCount}</div>
+            ${progressBlock('За неделю', doneCount, inWeek.length)}
       <div class="wk">
         <button class="mini ghost" data-wk="-1">‹ Назад</button>
         <button class="mini" data-wk="now">Эта неделя</button>
