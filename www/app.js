@@ -244,6 +244,11 @@ function toggle(id) {
   x.done = !x.done;
   x.doneAt = x.done ? Date.now() : null;
   save();
+  haptic(x.done ? 'success' : 'light');
+  if (x.done && x.due === today()) {
+    const day = state.tasks.filter(t => t.due === x.due);
+    if (day.every(t => t.done)) { setTimeout(confetti, 150); toast('Всё на сегодня сделано!', 2800); }
+  }
   if (el) {
     el.classList.toggle('done', x.done);
     el.classList.add('flash');
@@ -309,14 +314,16 @@ $('#quick').addEventListener('submit', e => {
   e.preventDefault();
   const p = parseQuick(qin.value);
   if (!p) return;
-  state.tasks.push({
+  const task = {
     id: uid(), subjectId: p.subjectId, title: p.title,
     issued: today(), due: p.due, done: false, score: null, max: null,
     created: Date.now(),
-  });
+  };
+  state.tasks.push(task);
   save();
   qin.value = ''; $('#qprev').innerHTML = '';
   render();
+  afterAdd(task);
 });
 /* ---------- расчёт баллов и оценок ---------- */
 const fmtN = n => Math.round(n * 10) / 10;
@@ -1043,4 +1050,196 @@ document.querySelectorAll('#nav button').forEach(b => {
 });
 
 playEnter();
+/* ---------- подсказка с кнопкой ---------- */
+function snack(text, label, onAction, ms = 5000) {
+  let el = $('#snack');
+  if (!el) { el = document.createElement('div'); el.id = 'snack'; document.body.appendChild(el); }
+  el.innerHTML = '<span></span><button type="button"></button>';
+  el.querySelector('span').textContent = text;
+  const b = el.querySelector('button');
+  b.textContent = label;
+  b.onclick = () => { el.classList.remove('show'); onAction(); };
+  el.classList.add('show');
+  clearTimeout(snack.t);
+  snack.t = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+/* ---------- вибрация ---------- */
+function haptic(kind = 'light') {
+  try {
+    const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+    if (H) {
+      if (kind === 'success') H.notification({ type: 'SUCCESS' });
+      else if (kind === 'heavy') H.impact({ style: 'HEAVY' });
+      else H.impact({ style: 'LIGHT' });
+    } else if (navigator.vibrate) navigator.vibrate(kind === 'heavy' ? 30 : 12);
+  } catch (e) { /* без вибрации приложение работает */ }
+}
+
+/* ---------- конфетти ---------- */
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let cv = $('#confetti');
+  if (!cv) { cv = document.createElement('canvas'); cv.id = 'confetti'; document.body.appendChild(cv); }
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.width = innerWidth * dpr, H = cv.height = innerHeight * dpr;
+  const ctx = cv.getContext('2d');
+  const colors = ['#a892e6', '#7fd1a6', '#ffd966', '#f4a6b4', '#9ec9f5'];
+  const parts = Array.from({ length: 110 }, () => ({
+    x: W / 2 + (Math.random() - .5) * W * .3, y: H * .62,
+    vx: (Math.random() - .5) * 16 * dpr, vy: (-Math.random() * 16 - 8) * dpr,
+    s: (5 + Math.random() * 6) * dpr, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4,
+    c: colors[(Math.random() * colors.length) | 0], round: Math.random() < .35,
+  }));
+  const t0 = performance.now();
+  (function frame(now) {
+    const k = (now - t0) / 2400;
+    ctx.clearRect(0, 0, W, H);
+    parts.forEach(p => {
+      p.vy += .55 * dpr; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - k);
+      ctx.translate(p.x, p.y); ctx.rotate(p.r);
+      ctx.fillStyle = p.c;
+      if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.s / 2, 0, 6.28); ctx.fill(); }
+      else ctx.fillRect(-p.s / 2, -p.s / 3, p.s, p.s * .66);
+      ctx.restore();
+    });
+    if (k < 1) requestAnimationFrame(frame); else ctx.clearRect(0, 0, W, H);
+  })(t0);
+}
+
+/* ---------- новая карточка ---------- */
+function afterAdd(task) {
+  haptic('light');
+  const el = document.querySelector(`.task[data-id="${task.id}"]`);
+  if (el) {
+    el.classList.add('newcard');
+    const r = el.getBoundingClientRect();
+    if (r.top < 70 || r.bottom > window.innerHeight - 170) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => el.classList.remove('newcard'), 2200);
+  }
+  const s = subj(task.subjectId);
+  snack(`Добавлено: ${s.short}` + (task.due ? ` · ${fmtShort(task.due)}` : ''), 'Отменить', () => {
+    state.tasks = state.tasks.filter(t => t.id !== task.id);
+    save(); render();
+  });
+}
+
+function deleteTask(id) {
+  const i = state.tasks.findIndex(t => t.id === id);
+  if (i < 0) return;
+  const [t] = state.tasks.splice(i, 1);
+  save(); haptic('heavy'); render();
+  snack('Задание удалено', 'Вернуть', () => {
+    state.tasks.splice(Math.min(i, state.tasks.length), 0, t);
+    save(); render();
+  });
+}
+
+/* ---------- свайпы по карточкам ---------- */
+let sw = null, swipeEnd = 0;
+const SW_MIN = 96;
+
+$('#screen').addEventListener('touchstart', e => {
+  const el = e.target.closest('.task');
+  if (!el || e.touches.length !== 1) { sw = null; return; }
+  sw = { el, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, on: false, ready: false };
+}, { passive: true });
+
+$('#screen').addEventListener('touchmove', e => {
+  if (!sw) return;
+  const dx = e.touches[0].clientX - sw.x, dy = e.touches[0].clientY - sw.y;
+  if (!sw.on) {
+    if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; }
+    if (Math.abs(dx) < 14 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    sw.on = true;
+    sw.el.classList.add('swiping');
+  }
+  if (e.cancelable) e.preventDefault();
+  sw.dx = Math.max(-170, Math.min(170, dx));
+  const el = sw.el, ready = Math.abs(sw.dx) >= SW_MIN;
+  el.style.transform = `translateX(${sw.dx}px)`;
+  el.style.setProperty('--dx', Math.abs(sw.dx) + 'px');
+  el.dataset.sw = sw.dx > 0 ? (el.classList.contains('done') ? 'undo' : 'done') : 'del';
+  el.classList.toggle('ready', ready);
+  if (ready && !sw.ready) haptic('light');
+  sw.ready = ready;
+}, { passive: false });
+
+function endSwipe(cancel) {
+  if (!sw) return;
+  const { el, dx, on } = sw;
+  sw = null;
+  if (!on) return;
+  swipeEnd = Date.now();
+  el.classList.remove('swiping', 'ready');
+  el.style.transform = '';
+  el.removeAttribute('data-sw');
+  el.style.removeProperty('--dx');
+  if (cancel || Math.abs(dx) < SW_MIN) return;
+  if (dx > 0) toggle(el.dataset.id); else deleteTask(el.dataset.id);
+}
+$('#screen').addEventListener('touchend', () => endSwipe(false));
+$('#screen').addEventListener('touchcancel', () => endSwipe(true));
+
+// после свайпа не открываем редактор по случайному «клику»
+$('#screen').addEventListener('click', e => {
+  if (Date.now() - swipeEnd < 450) { e.stopPropagation(); e.preventDefault(); }
+}, true);
+
+/* ---------- подтяни, чтобы обновить («Баллы») ---------- */
+document.body.insertAdjacentHTML('beforeend', `<div id="ptr">
+  <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+  <svg class="rng" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 4a8 8 0 1 0 8 8"/></svg></div>`);
+const ptrEl = $('#ptr');
+let pt = null;
+
+function ptrHide() {
+  ptrEl.classList.remove('ready', 'spin');
+  ptrEl.style.opacity = 0;
+  ptrEl.style.transform = 'translate(-50%, -60px)';
+}
+
+async function pullSync() {
+  if (!auth.access) { ptrHide(); toast('Сначала войди в дневник', 3000); return; }
+  ptrEl.classList.add('spin');
+  ptrEl.style.opacity = 1;
+  ptrEl.style.transform = 'translate(-50%, 44px)';
+  try {
+    await syncDiary(() => {});
+    render();
+    toast('Баллы обновлены', 2000);
+  } catch (e) {
+    if (e.auth) {
+      auth = { email: auth.email }; saveAuth(); render();
+      toast('Вход устарел: войди заново', 5000);
+    } else toast('Не удалось обновить: ' + e.message, 4000);
+  } finally { ptrHide(); }
+}
+
+$('#screen').addEventListener('touchstart', e => {
+  if (tab !== 'points' || window.scrollY > 0 || e.touches.length !== 1 || e.target.closest('input, textarea, select')) { pt = null; return; }
+  pt = { x: e.touches[0].clientX, y: e.touches[0].clientY, d: 0, ready: false };
+}, { passive: true });
+
+$('#screen').addEventListener('touchmove', e => {
+  if (!pt) return;
+  const dy = e.touches[0].clientY - pt.y, dx = e.touches[0].clientX - pt.x;
+  if (dy <= 0 || Math.abs(dx) > dy) { ptrEl.style.opacity = 0; pt.d = 0; return; }
+  pt.d = Math.min(dy * 0.5, 80);
+  ptrEl.style.opacity = Math.min(1, pt.d / 40);
+  ptrEl.style.transform = `translate(-50%, ${pt.d - 20}px)`;
+  const ready = pt.d >= 60;
+  if (ready && !pt.ready) haptic('light');
+  pt.ready = ready;
+  ptrEl.classList.toggle('ready', ready);
+}, { passive: true });
+
+$('#screen').addEventListener('touchend', () => {
+  if (!pt) return;
+  const ready = pt.ready;
+  pt = null;
+  if (ready) pullSync(); else ptrHide();
+});
 render();
