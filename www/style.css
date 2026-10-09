@@ -242,3 +242,38 @@ html, body, .subj, #nav, .panel, .dlg, #qin, .chip { transition: background-colo
 @media (prefers-reduced-motion: reduce) {
   #screen.enter > *, #screen.enter .subjs > *, #screen.enter .bar i, .task.flash .chk { animation: none !important; }
 }
+/* ---------- шрифт ---------- */
+html, body, button, input, select, textarea { font-family: 'Nunito Variable', system-ui, -apple-system, Roboto, sans-serif; }
+html { overflow-x: hidden; }
+
+/* ---------- новая карточка и подсказка «Отменить» ---------- */
+@keyframes popIn { 0% { opacity: 0; transform: translateY(-14px) scale(.96); } 60% { opacity: 1; transform: translateY(2px) scale(1.01); } 100% { opacity: 1; transform: none; } }
+@keyframes glow { 0%, 60% { box-shadow: 0 0 0 3px var(--lilac-d), 0 4px 16px rgba(168, 146, 230, .45); } 100% { box-shadow: 0 1px 4px rgba(120, 100, 180, .08); } }
+.task.newcard { animation: popIn .5s cubic-bezier(.2, .9, .3, 1.2) both, glow 2.2s ease-out both; }
+#snack { position: fixed; left: 50%; transform: translate(-50%, 20px); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 78px); display: flex; align-items: center; gap: 12px; background: var(--ink); color: var(--bg); padding: 8px 8px 8px 14px; border-radius: 14px; font-size: 13px; max-width: 90vw; opacity: 0; pointer-events: none; transition: opacity .2s, transform .25s; z-index: 20; }
+#snack.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#snack button { border: 0; border-radius: 10px; padding: 6px 10px; background: var(--lilac-d); color: #fff; font: inherit; font-weight: 700; }
+
+/* ---------- свайпы ---------- */
+.task { touch-action: pan-y; position: relative; }
+.task.swiping { transition: none; }
+.task[data-sw="done"].swiping { box-shadow: calc(var(--dx) * -1) 0 0 0 var(--mint-d); }
+.task[data-sw="undo"].swiping { box-shadow: calc(var(--dx) * -1) 0 0 0 var(--lilac-d); }
+.task[data-sw="del"].swiping { box-shadow: var(--dx) 0 0 0 var(--rose-d); }
+.task[data-sw]::before { position: absolute; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: 800; color: #fff; opacity: .7; white-space: nowrap; }
+.task[data-sw="done"]::before { content: '✓ Готово'; left: calc(var(--dx) * -1 + 14px); }
+.task[data-sw="undo"]::before { content: 'Вернуть'; left: calc(var(--dx) * -1 + 14px); }
+.task[data-sw="del"]::before { content: 'Удалить'; right: calc(var(--dx) * -1 + 14px); }
+.task.ready::before { opacity: 1; }
+
+/* ---------- подтяни, чтобы обновить ---------- */
+@keyframes spin { to { transform: rotate(360deg); } }
+#ptr { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 6px); transform: translate(-50%, -60px); width: 38px; height: 38px; border-radius: 50%; background: var(--card); box-shadow: 0 2px 10px rgba(120, 100, 180, .25); display: flex; align-items: center; justify-content: center; opacity: 0; z-index: 6; pointer-events: none; transition: opacity .2s; }
+#ptr svg { width: 20px; height: 20px; color: var(--lilac-d); transition: transform .2s; }
+#ptr .rng { display: none; }
+#ptr.ready .arr { transform: rotate(180deg); }
+#ptr.spin .arr { display: none; }
+#ptr.spin .rng { display: block; animation: spin .8s linear infinite; }
+
+/* ---------- конфетти ---------- */
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
