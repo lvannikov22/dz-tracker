@@ -166,3 +166,9 @@ details.sec summary { font-size: 13px; color: var(--ink2); font-weight: 600; mar
 .prog { margin-top: 10px; }
 .prog .bar { height: 8px; margin-top: 5px; }
 .prog .bar i { background: var(--mint-d); }
+.allbtn { margin: 8px 0 0; padding: 6px 12px; font-size: 13px; }
+.backbtn { margin: 0 0 8px; padding: 6px 12px; font-size: 13px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.fchip { border: 0; border-radius: 999px; padding: 6px 12px; background: var(--lilac); color: var(--ink); font: inherit; font-size: 13px; }
+.fchip.on { background: var(--lilac-d); color: #fff; }
+.dcard select { display: block; width: 100%; margin-top: 8px; padding: 9px 10px; border: 2px solid var(--lilac); border-radius: 12px; font: inherit; color: var(--ink); background: #fff; }
