@@ -578,6 +578,7 @@ function renderSettings() {
     <div class="head"><h1>Настройки</h1></div>
     <section class="sec"><h2>Дневник</h2>${diaryCard()}</section>
         ${notifSection()}
+        ${themeSection()}
     <section class="sec"><h2>Свои слова для предметов</h2>
       <div class="sl pad">Фамилии преподавателей, сокращения. Через запятую, например: бобрик, тесты</div>
       <div class="subj">${kwRows}</div></section>
@@ -967,4 +968,45 @@ $('#screen').addEventListener('input', e => {
 $('#screen').addEventListener('change', e => {
   if (e.target.id === 'a-subj') { allFilter.subject = e.target.value; fillAll(); }
 });
+/* ---------- темы ---------- */
+const THEME_KEY = 'dz.theme'; // light | dark | auto
+const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
+const themeMode = () => localStorage.getItem(THEME_KEY) || 'auto';
+const isDark = () => themeMode() === 'dark' || (themeMode() === 'auto' && darkMq.matches);
+
+function applyTheme() {
+  const dark = isDark();
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', dark ? '#171425' : '#faf8ff');
+}
+
+document.body.insertAdjacentHTML('beforeend', `<button id="theme-btn" class="theme-btn" aria-label="Сменить тему">
+  <svg class="ico sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.4" fill="currentColor"/>
+    <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M5.5 18.5l1.4-1.4M17.1 6.9l1.4-1.4"/></svg>
+  <svg class="ico moon" viewBox="0 0 24 24"><path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+    <circle cx="17.5" cy="5.5" r="1.1" fill="#f2c94c"/><circle cx="20.2" cy="9" r=".75" fill="#f2c94c"/></svg>
+</button>`);
+
+function themeSection() {
+  const m = themeMode();
+  const b = (k, l) => `<button class="mini ${m === k ? '' : 'ghost'}" data-theme-set="${k}">${l}</button>`;
+  return `<section class="sec"><h2>Тема</h2><div class="subj dcard">
+    <div class="btns2">${b('light', 'Светлая')}${b('dark', 'Тёмная')}${b('auto', 'Авто')}</div>
+    <div class="sl">«Авто» значит как в настройках телефона</div></div></section>`;
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('#theme-btn')) {
+    localStorage.setItem(THEME_KEY, isDark() ? 'light' : 'dark');
+    applyTheme();
+    if (tab === 'settings') renderSettings();
+    return;
+  }
+  const o = e.target.closest('[data-theme-set]');
+  if (o) { localStorage.setItem(THEME_KEY, o.dataset.themeSet); applyTheme(); renderSettings(); }
+});
+
+darkMq.addEventListener('change', applyTheme);
+applyTheme();
 render();
