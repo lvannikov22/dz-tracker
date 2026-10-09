@@ -29,6 +29,11 @@ jobs:
       - name: Установка зависимостей
         run: npm install
 
+      - name: Шрифт Nunito
+        run: |
+          mkdir -p www/fonts
+          cp -r node_modules/@fontsource-variable/nunito www/fonts/nunito
+
       - name: Номер сборки для приложения
         run: echo "window.BUILD = ${{ github.run_number }};" > www/build.js
 
@@ -47,8 +52,7 @@ jobs:
       - name: Android-проект
         run: |
           npx cap add android
-          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
-          npx @capacitor/assets@3 generate --android
+                    sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
           mkdir -p android/app/src/main/res/drawable
           cat > android/app/src/main/res/drawable/ic_stat_dz.xml <<'EOF'
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
