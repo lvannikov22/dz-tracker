@@ -593,6 +593,7 @@ function renderSettings() {
     <section class="sec"><h2>Дневник</h2>${diaryCard()}</section>
         ${notifSection()}
         ${themeSection()}
+         ${animSection()}
     <section class="sec"><h2>Свои слова для предметов</h2>
       <div class="sl pad">Фамилии преподавателей, сокращения. Через запятую, например: бобрик, тесты</div>
       <div class="subj">${kwRows}</div></section>
@@ -1079,7 +1080,7 @@ function haptic(kind = 'light') {
 
 /* ---------- конфетти ---------- */
 function confetti() {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('noanim')) return;
   let cv = $('#confetti');
   if (!cv) { cv = document.createElement('canvas'); cv.id = 'confetti'; document.body.appendChild(cv); }
   const dpr = window.devicePixelRatio || 1;
@@ -1139,13 +1140,18 @@ function deleteTask(id) {
 }
 
 /* ---------- свайпы по карточкам ---------- */
-let sw = null, swipeEnd = 0;
+let sw = null, swipeEnd = 0, swRaf = 0;
 const SW_MIN = 96;
+
+function paintSwipe() {
+  swRaf = 0;
+  if (sw && sw.on) sw.el.style.transform = `translate3d(${sw.dx}px,0,0)`;
+}
 
 $('#screen').addEventListener('touchstart', e => {
   const el = e.target.closest('.task');
   if (!el || e.touches.length !== 1) { sw = null; return; }
-  sw = { el, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, on: false, ready: false };
+  sw = { el, wrap: el.parentElement, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, on: false, ready: false, mode: '' };
 }, { passive: true });
 
 $('#screen').addEventListener('touchmove', e => {
@@ -1157,27 +1163,29 @@ $('#screen').addEventListener('touchmove', e => {
     sw.on = true;
     sw.el.classList.add('swiping');
   }
-  if (e.cancelable) e.preventDefault();
   sw.dx = Math.max(-170, Math.min(170, dx));
-  const el = sw.el, ready = Math.abs(sw.dx) >= SW_MIN;
-  el.style.transform = `translateX(${sw.dx}px)`;
-  el.style.setProperty('--dx', Math.abs(sw.dx) + 'px');
-  el.dataset.sw = sw.dx > 0 ? (el.classList.contains('done') ? 'undo' : 'done') : 'del';
-  el.classList.toggle('ready', ready);
-  if (ready && !sw.ready) haptic('light');
-  sw.ready = ready;
-}, { passive: false });
+  const mode = sw.dx > 0 ? (sw.el.classList.contains('done') ? 'undo' : 'done') : 'del';
+  if (mode !== sw.mode) { sw.mode = mode; sw.wrap.dataset.sw = mode; }
+  const ready = Math.abs(sw.dx) >= SW_MIN;
+  if (ready !== sw.ready) {
+    sw.ready = ready;
+    sw.wrap.classList.toggle('ready', ready);
+    if (ready) haptic('light');
+  }
+  if (!swRaf) swRaf = requestAnimationFrame(paintSwipe);
+}, { passive: true });
 
 function endSwipe(cancel) {
   if (!sw) return;
-  const { el, dx, on } = sw;
+  const { el, wrap, dx, on } = sw;
   sw = null;
+  if (swRaf) { cancelAnimationFrame(swRaf); swRaf = 0; }
   if (!on) return;
   swipeEnd = Date.now();
-  el.classList.remove('swiping', 'ready');
+  el.classList.remove('swiping');
   el.style.transform = '';
-  el.removeAttribute('data-sw');
-  el.style.removeProperty('--dx');
+  wrap.classList.remove('ready');
+  setTimeout(() => wrap.removeAttribute('data-sw'), 150);
   if (cancel || Math.abs(dx) < SW_MIN) return;
   if (dx > 0) toggle(el.dataset.id); else deleteTask(el.dataset.id);
 }
@@ -1260,4 +1268,24 @@ if (AppPlugin) {
     if (AppPlugin.minimizeApp) AppPlugin.minimizeApp(); else AppPlugin.exitApp();
   });
 }
+/* ---------- анимации: вкл/выкл ---------- */
+const animMode = () => localStorage.getItem('dz.anim') || (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on');
+function applyAnim() { document.documentElement.classList.toggle('noanim', animMode() === 'off'); }
+
+function animSection() {
+  const m = animMode();
+  const b = (k, l) => `<button class="mini ${m === k ? '' : 'ghost'}" data-anim="${k}">${l}</button>`;
+  return `<section class="sec"><h2>Анимации</h2><div class="subj dcard">
+    <div class="btns2">${b('on', 'Включены')}${b('off', 'Выключены')}</div>
+    <div class="sl">Выключи, если телефон подтормаживает: пропадут плавные эффекты, конфетти и анимация карточек, а всё остальное останется</div></div></section>`;
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-anim]');
+  if (!b) return;
+  localStorage.setItem('dz.anim', b.dataset.anim);
+  applyAnim();
+  renderSettings();
+});
+applyAnim();
 render();
