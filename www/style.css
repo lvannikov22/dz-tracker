@@ -284,3 +284,5 @@ html { overflow-x: hidden; }
 [data-theme="dark"] .cbar { opacity: .55; }
 .task[data-sw="done"]::before, .task[data-sw="undo"]::before { clip-path: inset(0 calc(100% - var(--dx) + 14px) 0 0); }
 .task[data-sw="del"]::before { clip-path: inset(0 0 0 calc(100% - var(--dx) + 14px)); }
+
+#snack, #toast { z-index: 8; }
