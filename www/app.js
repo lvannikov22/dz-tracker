@@ -1243,4 +1243,21 @@ $('#screen').addEventListener('touchend', () => {
   pt = null;
   if (ready) pullSync(); else ptrHide();
 });
+/* ---------- кнопка «назад» и подсказки над редактором ---------- */
+function hideSnack() {
+  ['#snack', '#toast'].forEach(s => { const el = $(s); if (el) el.classList.remove('show'); });
+}
+new MutationObserver(() => { if (!$('#sheet').hidden) hideSnack(); })
+  .observe($('#sheet'), { attributes: true, attributeFilter: ['hidden'] });
+
+const AppPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+if (AppPlugin) {
+  AppPlugin.addListener('backButton', () => {
+    const d = document.querySelector('.dlg-back');
+    if (d) { d.dispatchEvent(new MouseEvent('click', { bubbles: true })); return; }
+    if (!$('#sheet').hidden) { closeEditor(); return; }
+    if (tab !== 'today') { tab = 'today'; render(); window.scrollTo(0, 0); playEnter(); return; }
+    if (AppPlugin.minimizeApp) AppPlugin.minimizeApp(); else AppPlugin.exitApp();
+  });
+}
 render();
