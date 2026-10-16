@@ -157,7 +157,8 @@ function dueLabel(x) {
 function card(x) {
   const s = subj(x.subjectId);
   const pts = (x.score != null || x.max != null) ? `<span class="pts">${x.score ?? '–'}/${x.max ?? '–'}</span>` : '';
-    return `<div class="task${x.done ? ' done' : ''}" data-id="${x.id}" style="--c:${s.color}">
+  return `<div class="task${x.done ? ' done' : ''}" data-id="${x.id}">
+    <span class="cbar" style="background:${s.color}"></span>
     <button class="chk" data-act="toggle" aria-label="Готово">${x.done ? '✓' : ''}</button>
     <div class="tb">
       <div class="tt">${esc(x.title)}</div>
