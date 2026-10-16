@@ -286,3 +286,24 @@ html { overflow-x: hidden; }
 .task[data-sw="del"]::before { clip-path: inset(0 0 0 calc(100% - var(--dx) + 14px)); }
 
 #snack, #toast { z-index: 8; }
+
+/* ---------- быстрые свайпы: обёртка и подложка ---------- */
+.tw { position: relative; overflow: hidden; margin: 0 -4px; padding: 2px 4px 4px; border-radius: 16px; }
+.tw:has(.newcard) { overflow: visible; }
+.tw .task { margin-bottom: 0; position: relative; z-index: 1; }
+.task.swiping { transition: none; will-change: transform; }
+.tw::before { content: ''; position: absolute; inset: 2px 4px 4px; border-radius: 14px; opacity: 0; transition: opacity .15s; }
+.tw[data-sw]::before { opacity: 1; }
+.tw[data-sw="done"]::before { background: var(--mint-d); }
+.tw[data-sw="undo"]::before { background: var(--lilac-d); }
+.tw[data-sw="del"]::before { background: var(--rose-d); }
+.tw[data-sw]::after { position: absolute; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: 800; color: #fff; opacity: .65; white-space: nowrap; }
+.tw[data-sw="done"]::after { content: '✓ Готово'; left: 20px; }
+.tw[data-sw="undo"]::after { content: 'Вернуть'; left: 20px; }
+.tw[data-sw="del"]::after { content: 'Удалить'; right: 20px; }
+.tw.ready::after { opacity: 1; }
+.cbar { filter: none; }
+@keyframes glow { 0%, 60% { box-shadow: 0 0 0 3px var(--lilac-d); } 100% { box-shadow: 0 1px 4px rgba(120, 100, 180, .08); } }
+
+/* ---------- режим «без анимаций» ---------- */
+.noanim *, .noanim *::before, .noanim *::after { animation: none !important; transition: none !important; }
