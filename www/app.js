@@ -602,7 +602,8 @@ function renderSettings() {
       <div class="btns2"><button class="mini" data-act="export">Скопировать копию</button>
       <button class="mini ghost" data-act="import">Восстановить</button></div>
       <textarea id="backup" placeholder="Для восстановления вставь сюда копию"></textarea>
-      <button class="mini danger" data-act="wipe">Удалить все задания</button></div></section>
+      <button class="mini" data-act="upd">Проверить обновление</button>
+      <button class="mini webonly" data-act="webreload">Обновить приложение</button></div></section>`;
     <section class="sec"><h2>Приложение</h2><div class="subj dcard">
       <div class="sl">Сборка ${window.BUILD || 0}</div>
       <button class="mini" data-act="upd">Проверить обновление</button></div></section>`;
@@ -809,7 +810,7 @@ function scheduleSoon() {
 
 function notifSection() {
   const n = nset();
-  return `<section class="sec"><h2>Уведомления</h2><div class="subj dcard">
+  return `<section class="sec webonly"><h2>Уведомления</h2><div class="subj dcard"><div class="sl">В веб-версии напоминания недоступны: Apple не разрешает их без отдельного сервера. На Android они работают в установленном приложении.</div></div></section><section class="sec nativeonly"><h2>Уведомления</h2><div class="subj dcard">
     <label class="swrow"><span>Ежедневное напоминание</span><input type="checkbox" id="n-on" ${n.on ? 'checked' : ''}></label>
     <label class="kwrow"><span class="sl">Время</span><input type="time" id="n-time" value="${n.time}"></label>
     <div class="sl" style="margin-top:8px">Стиль</div>
@@ -1288,4 +1289,20 @@ document.addEventListener('click', e => {
   renderSettings();
 });
 applyAnim();
+/* ---------- веб-версия (PWA) ---------- */
+const IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+document.documentElement.classList.toggle('web', !IS_NATIVE);
+
+if (!IS_NATIVE && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-act="webreload"]')) location.reload();
+});
+
+if (!IS_NATIVE && /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone && !localStorage.getItem('dz.a2hs')) {
+  setTimeout(() => snack('Чтобы поставить как приложение: «Поделиться» → «На экран Домой»', 'Понятно',
+    () => localStorage.setItem('dz.a2hs', '1'), 20000), 1200);
+}
 render();
