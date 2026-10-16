@@ -307,3 +307,9 @@ html { overflow-x: hidden; }
 
 /* ---------- режим «без анимаций» ---------- */
 .noanim *, .noanim *::before, .noanim *::after { animation: none !important; transition: none !important; }
+
+/* ---------- веб-версия ---------- */
+.webonly { display: none; }
+.web .webonly { display: inline-block; }
+.web section.webonly { display: block; }
+.web .nativeonly, .web [data-act="upd"] { display: none !important; }
