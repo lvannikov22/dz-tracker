@@ -603,13 +603,13 @@ function renderSettings() {
       <button class="mini ghost" data-act="import">Восстановить</button></div>
       <textarea id="backup" placeholder="Для восстановления вставь сюда копию"></textarea>
       <button class="mini" data-act="upd">Проверить обновление</button>
-      <button class="mini webonly" data-act="webreload">Обновить приложение</button>
-    </div></section>
+
+      <button class="mini webonly" data-act="webreload">Обновить приложение</button></div></section>
     <section class="sec"><h2>Приложение</h2><div class="subj dcard">
       <div class="sl">Сборка ${window.BUILD || 0}</div>
-      <button class="mini" data-act="upd">Проверить обновление</button>
-    </div></section>`;
+      <button class="mini" data-act="upd">Проверить обновление</button></div></section>`;
 }
+
 
 async function exportBackup() {
   const data = { v: 1, tasks: state.tasks, grades: state.grades, userKw: state.userKw || {}, visible: state.visible || null };
